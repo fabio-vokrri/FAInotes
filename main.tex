@@ -6,6 +6,7 @@
 \usepackage{listings}
 
 \lstset{basicstyle=\ttfamily}
+
 \newtheorem{definition}{Definition}
 
 \title{\huge{\textit{Foundations of \\ Artificial Intelligence}}}
@@ -496,6 +497,57 @@ A special variation of the A* search is the \textbf{weighted A* algorithm}. It i
 The last, and most successful, variation of A* search is the \textbf{iterative-deepening A* search} (IDA* search), which reduces memory requirements by applying a limit to the values of the evaluation function \(f(n)\). It is to A* what iterative-deepening was to depth-first search: IDA* gives all the benefits of A* without the requirement to keep the reached states in memory, at the cost of visiting some states multiple times. In IDA* the cutoff value is the \(f-cost (g+h)\); at each iteration, the cutoff value is the smallest \(f-cost\) of any node that exceeded the cutoff on the previous iteration. IDA* search is complete and optimal when the heuristic function \(h(n)\) is admissible.
 
 \newpage
-\section{Adversarial Search}
+\section{Constraint Satisfaction Problems}
+In standard search, the basic idea is that problems can be solved by searching the state space, that is a graph in which nodes represent states and edges between them represent actions. In this type of search algorithms, the states are atomic, indivisible, like a \textit{black box}: for each problem, we need domain-specific heuristic function to describe the transition between states.
+
+In \textbf{constraint satisfaction problems}, \textbf{CSP} for short, we break open this black box by using a factored representation for each state, that consists of a set of variables, each of which have a value. A CSP is solved if each variable has a value that satisfies all the constraints on that variable.
+
+CSP search algorithms take advantage of the structure of states and use a general heuristic to enable the solution of complex problems. The main idea is that we can eliminate large portions of the search space by identifying values that violate constraints on variables.  \\
+
+\begin{definition}
+A CSP consists of three components:
+\begin{itemize}
+    \item \(\mathcal{X} =\{X_1, ..., X_n\}\) is a set of variables;
+    \item \(\mathcal{D} =\{D_1, ..., D_n\}\) is a set of domains, one for each variable;
+    \item \(\mathcal{C}\) is a set of constraints that specify valid combinations of values.
+\end{itemize}
+\end{definition}
+
+A domain \(D_i\) is a set of allowable values \(\{v_1, ..., v_k\}\) for each variable \(X_i\). Each constraint \(\mathcal{C}_j\) consists of a pair \(<scope,\; rel>\), where \(scope\) is a tuple of variables that participate in the constraint, and \(rel\) is a relation that defines the valid values for those variables. A relation can be represented as am explicit set of all tuples of values that satisfy the constraint, or as a function that can compute whether or not a tuple is a member of the solution.
+
+The goal of the CSP is to assign values to the variables, such that 
+\[\{X_i=v_i, X_j=v_j, ...\}.\] 
+An assignment is \textbf{consistent} if does not violate any constraints and is \textbf{complete} if all variables are assigned a value. A solution to a CSP is a consistent and complete assignment. If all the domains have fixed size \(d\), there are \(O(d^n)\) complete assignments possible.
+
+Every CSP can be visualized as a constraint graph: the nodes of the graph correspond to variables of the problem and the edge connects any two variables that participate in a constraint. This type of representation for the problem can dramatically speed up the search problem. Additionally, we will consider only binary constraints, in which only two variables are involved, because higher order constraints can be transformed in a CSP with only binary constraints through simple transformations.
+
+\subsection{Constraints Propagation - Arc consistency}
+A variable in a CSP problem is arc-consistent if every value in its domain satisfies the variable's binary constraints. More formally, \(X_i\) is arc-consistent with respect to another variable \(X_j\) if there is some value in the domain \(D_j\) that satisfies the binary constraint in the arch \((X_i, X_j)\).
+
+The most popular algorithm for enforcing the arc-consistency property on a CSP problem is called \textbf{AC-3}, which maintains a queue of arcs to consider. Initially, the queue contains all the arcs in the CSP. Then, the algorithm pops off an arbitrary arc \((X_i, X_j)\) and makes \(X_i\) arc-consistent with respect to \(X_j\). If this leaves \(D_i\) unchanged, the algorithm moves on the next arc, but if this operation revises the domain \(D_i\) (making it smaller), then we add to the queue all arcs \(X_k, X_i\), where \(X_k\) is a neighbor of \(X_i\). This is necessary because, by reducing \(D_i\), we might enable further reductions in \(D_k\), even if we've already applied the algorithm to that node. If \(D_i\) is revised down to nothing, then we know that the whole CSP problem has no consistent solution and the algorithm can immediately return failure. Otherwise, we keep checking, trying to remove values from the domains of variables until no more arcs are in the queue. At this point we are left with a CSP equivalent to the initial one, but the arc consistent one will be faster to search because its variables have smaller domains.
+
+The complexity of AC-3 is \(O(cd^3)\) in the worst case scenario.
+
+\subsection{Backtracking Search for CSP}
+Sometimes we can finish the constraint propagation process and still have variables with multiple possible values. In this case we have to search a solution. For a CSP problem with \(n\) variables of domain size \(d\) we would end up with a search tree where all the complete assignments are leaf nodes at depth \(n\). But, the branching factor at the top level would be \(nd\) because any of \(d\) values can be assigned to any of \(n\) variables. At the next level, the branching factor is \((n-1)d\) and so on for \(n\) levels. So the tree has \(n!d^n\) leaves, even though there are only \(d^n\) possible assignments.
+
+We can remove the \(n!\) factor by recognizing that CSP have the \textbf{commutative property}. A problem is said to be commutative if the order of any given set of actions does not matter. In CSPs it makes no difference if we first assign a value to a variable first and then to another, or the other way around. Therefore, we need only consider a single variable at each node in the search tree. At each level of the tree we must choose which variable we will deal with, but we never have to backtrack over that choice. 
+
+Backtracking search algorithm for CSP repeatedly chooses an unassigned variable and tries all values in the domain of that variable in turn, trying to extend each one into a solution recursively. If the call succeeds, the solution is returned, otherwise the assignment is restored to the previous state, from which we try all the remaining values. If no value works we return a failure. This algorithm can be improved by using domain-independent heuristics that take advantage of the factored representation of the CSP.
+
+\subsubsection{Variable ordering}
+There are various strategies we can implement in order to select an unassigned variable. The simplest one is to choose variables in order \(\{X_1, X_2, ..., X_n\}\) or randomly. Though, there are better heuristics, like choosing the variable with the fewest possible values, called \textbf{minimum-remaining-values} (\textbf{MRV}). This strategy is also called "fail-first" as it picks a variable that is most likely to cause a failure soon, thereby pruning the tree.
+
+Another strategy is the \textbf{degree heuristic}, which attempts to reduce the branching factor on future choices by selecting the variable that is involved in the largest number of constraints on other unassigned variables. The MRV heuristic is usually more powerful, but the degree heuristic can be useful as a tie-breaker.
+
+Once a variable is selected, the algorithm must decide on the order ti examine its values. An efficient algorithm is the \textbf{least-constraining-value} heuristic, which prefers the value that rules out the fewest choices for the neighboring variables in the constraint graph.
+
+We learned that variables should be selected following the "fail-first" principle, while its values should follow the "fail-last" principle. This is because every variable has to be assigned eventually, so by choosing the ones that are likely to fail first, we will have fewer successful assignments to backtrack over. On the other hand, for value ordering we need only one solution, so it makes sense to look for the most likely values first.
+
+\subsubsection{Forward Checking}
+The AC-3 algorithm can reduce the domains of variables before we begin the search, but inference can be more powerful during the search. One simple type of inference is \textbf{forward checking}. Whenever a variable \(X\) is assigned, the forward checking algorithm establishes arc consistency for it: for each unassigned variable \(Y\) connected to \(X\) by a constraint, it deletes from \(Y\)'s domain any value that is consistent with the value chosen for \(X\). For many applications, the search is more effective if we combine the MRV algorithm with forward checking. A problem with forward checking is that although it detects many inconsistencies, it does not detect them all.
+
+\subsection{Local Search}
+We can efficiently solve CSPs using another paradigm: \textbf{local search}. It uses a complete state formulation where each state assigns a value to every variable, and the search changes the value of one variable at a time. To do so, it uses the \textbf{hill-climbing} algorithm: considering the states of a problem as laid out in a state-space landscape, each point has an "elevation", defined by the value of the objective function; the problems is narrowed down to finding the global maximum value. The only problem in this kind of algorithms is that they can stop at local maxima, yielding a sub-optimal solution.
 
 \end{document}
