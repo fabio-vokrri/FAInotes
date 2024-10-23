@@ -2,6 +2,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{amsthm}
+\usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{listings}
 
@@ -550,4 +551,48 @@ The AC-3 algorithm can reduce the domains of variables before we begin the searc
 \subsection{Local Search}
 We can efficiently solve CSPs using another paradigm: \textbf{local search}. It uses a complete state formulation where each state assigns a value to every variable, and the search changes the value of one variable at a time. To do so, it uses the \textbf{hill-climbing} algorithm: considering the states of a problem as laid out in a state-space landscape, each point has an "elevation", defined by the value of the objective function; the problems is narrowed down to finding the global maximum value. The only problem in this kind of algorithms is that they can stop at local maxima, yielding a sub-optimal solution.
 
+\newpage
+\section{Adversarial Search and Games}
+Adversarial search problems are a set of problems in which we explore competitive environments, where two or more agents have conflicting goals.
+
+\subsection{Two-Player Zero-Sum Games}
+The most studied problems in AI are the deterministic, two-player, turn-taking, perfect information (fully observable) and zero-sum (there's always one winning player) games. In game theory the terms move and position are used as synonim for action and state respectively.
+
+The analyzed games will always have two involved players, called MAX and MIN, in which MAX moves first and then the players take turns moving until the game is over. 
+
+A game can formally be defined with the following elements:
+\begin{itemize}
+    \item \(S_0\): the initial state, which specifies how the game is set up at the start;
+    \item \lstinline{To-Move(s)}: the player whose turn it is to move in state \(s\);
+    \item \lstinline{Actions(s)}: the set of legal moves the player can do in state \(s\);
+    \item \lstinline{Result(s, a)}: the transition model, which defines the state resulting from the taking action \(a\) in state \(s\);
+    \item \lstinline{Is-Terminal(s)}: the terminal test, which returns true if the game is in a terminal state, false otherwise;
+    \item \lstinline{Utility(s, p)}: the utility function, which defines the final numeric value to player \(p\) when the game ends in terminal state \(s\).    
+\end{itemize}
+
+The initial state, the \lstinline{Actions} function and the \lstinline{Result} one define the \textbf{state space graph}, where the vertices represent the states and the edges the moves. As always a \textbf{search tree} can be superimposed on the graph (or on a particular part of it), to determine what moves to make next. We can define the complete \textbf{game tree} as the search tree that follows every possible path all the way down to a terminal state.
+Leaf nodes contain the utility value of the terminal state from the point of view of MAX: high values are good for MAX and bad from MIN.
+
+\subsection{Optimal Decisions}
+Given a game tree, the optimal strategy can be determined by evaluating the \textbf{minimax} value of each state of the tree, which is indicated with \lstinline{MINIMAX(s)}. This value is the utility for MAX being in that state, \textit{assuming that both players play optimally}. The minimax value of a terminal state is just its utility. In any terminal space, MAX prefers to move to a state of maximum value when it's his turn to move, while MIN prefers a state of minimum, which is minimum value for MAX (thus maximum value for MIN). So the minimax function is calculated as follows:
+\begin{multline}
+    MINIMAX(s) = \\
+    \begin{cases}
+        Utility(s, MAX) & if \;\; Is-Terminal(s) \\
+        \max_{a\in Actions(s)} MINIMAX(Result(s, a)) & if \;\; To-Move(s) = MAX \\
+        \min_{a \in Actions(s)} MINIMAX(Result(s, a)) & if \;\; To-Move(s) = MIN        
+    \end{cases}
+\end{multline}
+
+This definition of optimal play for MAX assumes that MIN also plays optimally. If MIN does not play optimally, then MAX will be at least as good as against an optimal player, possibly better.
+
+\subsubsection{Minimax search algorithm}
+By using the \lstinline{MINIMAX} function, we can build a \textbf{minimax search algorithm} that finds the best move for MAX, by trying all actions and choosing the one whose resulting state has the highest \lstinline{MINIMAX} value. This algorithm is recursive and proceeds all the way down to the leaves of the tree and than backs up the minimax values through the tree as the recursion unwinds.
+
+The algorithm performs a complete depth-first exploration of the game tree: if the maximum depth of the tree is \(m\) and there are \(b\) legal moves at each point, then the time complexity of the minimax algorithm is \(O(b^m)\) and the space complexity is \(O(bm)\). The exponential time complexity makes the minimax algorithm impractical for complex games. By approximating the analysis in various ways, we can write more efficient algorithms.
+
+\subsubsection{Alpha-Beta pruning}
+As seen in the previous section, the number of game states is exponential in the depth of the tree. We can speed up the algorithms by \textbf{pruning} large portions of the tree that make no difference to the outcome. We will examine the \textbf{alpha-beta pruning} technique.
+
+Sometimes the minimax value is independent of some of the successors' values: in such cases, those 
 \end{document}
