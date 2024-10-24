@@ -594,5 +594,40 @@ The algorithm performs a complete depth-first exploration of the game tree: if t
 \subsubsection{Alpha-Beta pruning}
 As seen in the previous section, the number of game states is exponential in the depth of the tree. We can speed up the algorithms by \textbf{pruning} large portions of the tree that make no difference to the outcome. We will examine the \textbf{alpha-beta pruning} technique.
 
-Sometimes the minimax value is independent of some of the successors' values: in such cases, those 
+Sometimes the minimax value is independent from the value of other nodes. Let \(n\) be a node of the tree, such that the player has a choice of moving to \(n\): if the player has a better option either at the same level as \(n\) or higher up, the player will never move to \(n\). So, once we have found out enough about \(n\) to reach this conclusion, we can prune the entire subtree with root in \(n\). 
+
+The alpha-beta pruning gets its name from the two extra parameters passed to the \lstinline{Max-Value(}\(state, \alpha, \beta\)\lstinline{)} function, that describe bounds on the backed-up values that appear anywhere along the path:
+\begin{itemize}
+    \item \(\alpha\) is the value of the best choice we have found so far at any choice point along the path for MAX. We can think of \(\alpha\) as "\textit{at least}".
+    \item \(\beta\) is the value of the best choice we have found so far at any choice point along the path for MIN. We can think of \(\beta\) as "\textit{at most}".
+\end{itemize}
+
+Alpha-beta search updates the values of \(\alpha\) and \(\beta\) as it goes along and prunes the remaining branches at node as soon as the value of the current node is known to be worse than the current \(\alpha\) or \(\beta\) value for MAX or MIN respectively.
+
+In order to make Alpha-beta pruning highly efficient we need to make some clarifications about the order in which we examine the states. One improvement we can make is to examine first the successors that are likely to be best. If this could be done perfectly, alpha-beta pruning would need to examine only \(O(b^{m/2})\) nodes to pick the best move, instead of the \(O(b^m)\) required by the minimax algorithm. So alpha-beta pruning with perfect move ordering can solve a tree roughly twice as deep as minimax in the same amount of time.
+
+\subsection{Heuristics for Alpha-Beta Tree Search}
+To make efficient use of the limited computational power and time, we can cut off the search early by applying a \textbf{heuristic evaluation function} ti states, effectively treating non-terminal nodes as if they were terminal. To do so, we replace the \lstinline{Utility} function with an \lstinline{Evaluation} function, which determines the state's utility. We also replace the terminal test by a \textbf{cutoff test}, which must return true for the terminal states and must decide when to cut off the search, based on the search depth and other properties.
+
+The \lstinline{Eval(s, p)} function returns an estimate of the expected utility of state \(s\) to player \(p\), which should be strongly correlated with the actual chances of winning. Most of the evaluation functions work by calculating various \textbf{features} if the state. The features taken together define various categories, called \textit{equivalence classes} of states: the states in each category have the same values for all the features. Any given category will contain some states that lead to winning, some that lead to draws and some others that lead to losses. Most of the evaluation functions compute separate numerical contributions from each feature and then combine them in one total value, using a \textbf{weighted linear function}:
+\[Eval(s) = w_1f_1(s)+w_2f_2(s)+\cdots+w_nf_n(s) = \sum_{i=1}^{n}w_if_i(s)\]
+
+\noindent where \(f_i\) is a feature of the position and \(w_i\) is a weight, saying how important a feature is. This sum should be normalized in order to get a value in the range between 0 and 1.
+
+\subsection{Stochastic Games}
+\textbf{Stochastic Games} bring us a little closer to the real world by adding a random element in the computation. In this case, the game tree must include \textbf{chance nodes} (represented in circles) in addition to MAX and MIN nodes. The branches leading from each chance node denote the random probability. 
+
+In this kind of games, we still want to pick the move that leads to the best decision. However, positions do not have definite minmax values. Instead, we can only calculate the \textbf{expected value} of a position: the average overall possible outcome of the chance nodes. This leads to the \textbf{expectiminimax value} for games with chance nodes, a generalization of the minimax value for deterministic games. Terminal, MAX and MIN nodes work exactly the same as before, but for chance nodes we compute the expected value, which is the sum of the value over all outcomes, weighted by the probability of each chance action:
+
+\begin{multline}
+    EXPECTIMINIMAX(s) = \\
+    \begin{cases}
+        Utility(s, MAX) & if \;\; Is-Terminal(s) \\
+        \max_{a\in Actions(s)} EXPECTIMINIMAX(Result(s, a)) & if \;\; To-Move(s) = MAX \\
+        \min_{a \in Actions(s)} EXPECTIMINIMAX(Result(s, a)) & if \;\; To-Move(s) = MIN \\
+        \Sigma_{r}P(r) EXPECTIMINIMAX(Result(s, a)) & if\;\; To-Move(s) = CHANCE\\
+    \end{cases}
+\end{multline}
+
+Where \(r\) represents the chance event and \(Result(s, r)\) is the same state as \(s\), with the additional fact that the result of the dice roll is \(r\).
 \end{document}
