@@ -629,5 +629,29 @@ In this kind of games, we still want to pick the move that leads to the best dec
     \end{cases}
 \end{multline}
 
-Where \(r\) represents the chance event and \(Result(s, r)\) is the same state as \(s\), with the additional fact that the result of the dice roll is \(r\).
+Where \(r\) represents the chance event and \(Result(s, r)\) is the same state as \(s\), with the additional fact that the result of the dice roll is \(r\)
+
+\subsection{Monte Carlo Tree Search}
+For games with large state spaces and high branching factor the algorithms used up to now are impractical. Furthermore there are cases in which we don't now the domain very well and the branches are all equally promising. In this cases, the best algorithm to use is the \textbf{Monte Carlo Tree Search}. It does not use a heuristic function to solve the problem, but instead the value of a state is determined as the average utility over a number of simulations of complete games starting from that state. A simulation, also called \textbf{playout} or \textbf{rollout}, chooses moves first for one player, the for the other, repeating until a terminal position is reached. At that point, the rules of the game decide who has won or lost, determining the "win percentage".
+
+In order to get useful information from the playout we need a \textbf{playout policy}, that biases the moves towards good ones instead of randomly choosing between the available ones. Once a policy has been chosen, we need to decide from what position to start the playouts and how many do we need to allocate for each position. The simplest solution is to start from the current state of the game and compute \(N\) simulations, tracking down which of the possible moves from the current position has the highest win percentage.
+
+While for stochastic games this converges to optimal play as \(N\) increases, for most game it is not sufficient: we need a selection policy that focuses on the important parts of the game tree. It should balance two main factors: \textbf{exploration} of states that have had few playouts, and \textbf{exploitation} of states that have done well in past playouts, to get more accurate estimate of their value.
+
+Monte Carlo Tree Search does that by maintaining a search tree and growing it on each iteration of the following steps:
+\begin{enumerate}
+    \item \textbf{Selection}: starting at the root of the search tree, we choose a move guided by the selection policy, leading to a successor node, and repeat the process moving down the tree to a leaf;
+    \item \textbf{Expansion}: we grow the search tree by generating one or more children of the selected node;
+    \item \textbf{Simulation}: we perform a playout from the newly generated child node, choosing moves for both players according to the playout policy;
+    \item \textbf{Back-propagation}: we use the result of the simulation to update all the search tree nodes going up to the root.
+\end{enumerate}
+
+We repeat these four steps either for a set number of iterations or until the allotted time has expired, and then return the move with the highest number of playouts.
+
+One effective selection policy is the \textbf{upper confidence bounds applied to trees} (\textbf{UCT}), which ranks each possible move based on an upper confidence bound formula called UCB1. For a given node \(n\), the formula is:
+
+\[UCB1(n) = \frac{U(n)}{N(n)}+C\cdot\sqrt{\frac{\log{N(Parent(n))}}{N(n)}}\]
+
+\noindent where \(U(n)\) is the total utility of all playouts that went through node \(n\), \(N(n)\) is the number of playouts through node \(n\), and \(Parent(n)\) is the parent node of \(n\) in the tree. Thus, the first term of the equation is the exploitation term, which calculates the average utility of \(n\). The second term of the equation, the one with the square root, is the exploration term. We see that in the numerator we have the logarithm of the number of times we have explored the parent of the current node: this means that if we are selecting \(n\) some non zero percentage of the time, the exploration term goes to zero as the counts increases, and eventually the playouts are given to the node with the highest average utility. \(C\) is a constant that balances exploitation and exploration.
+
 \end{document}
