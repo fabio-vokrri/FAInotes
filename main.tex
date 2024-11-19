@@ -194,105 +194,6 @@ There are two cases where goals are inadequate, but utility-based agents can sti
     \item Where there are several goals that the agent can aim for, none of which can be achieved with certainty: in this case the utility function provides a way in which the likelihood of success can be weighted against the importance of the goal.
 \end{enumerate}
 
-\section{Learning Agents}
-Any type of agent, such as model-based, goal-based or utility-based, can be built as a learning agent to improve their performance. Learning allows the agent to operate in a initially unknown environment and to become more competent than its initial knowledge alone might allow. 
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.75\linewidth]{images/Learning Agent.jpg}
-    \caption{Learning Agent}
-    \label{fig:learning_agent}
-\end{figure}
-
-It can be divided in four conceptual components:
-\begin{enumerate}
-    \item Learning element: responsible for making improvements;
-    \item Performance element: analyzes the sensor input data and selects external actions. It's what we considered as the entire agent in the previous chapter;
-    \item Critic: provides feedback on the actions taken by the agent and determines how the performance element should be modified to improve performance;
-    \item Problem generator: suggests exploratory actions that lead to new and informative experiences. 
-\end{enumerate}
-\
-\begin{definition}
-    A computer program is said to learn from experience \textbf{E} with respect to some class of tasks \textbf{T} and performance measure \textbf{P}, if it improves with the given experience.
-\end{definition}
-
-Formally, Machine Learning is a field of AI focused on building algorithms capable of learning by extracting knowledge from experience. The goal is to build programs that can make informed decisions on new unseen data.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.75\linewidth]{images/Machine Learning Paradigm.jpg}
-    \caption{Machine Learning Paradigm}
-    \label{fig:machine_learning_paradigm}
-\end{figure}
-
-There are three main types of machine learning agents:
-\begin{enumerate}
-    \item \textbf{Supervised Learning}: given a set of desired outputs \(y_1, ..., y_n\), the agent learns to produce the correct output for a new set of unseen values. The outputs from which the agent learns are called \textbf{labels}.
-    \item \textbf{Unsupervised Learning}: the agent exploits patterns and regularities in the experience collected (encoded as a dataset \(D = x_1, ..., x_n\)). In this case there's no desired output to predict and no feedback. The most common unsupervised learning task is called \textbf{clustering}, which detects useful clusters from the input example.
-    \item \textbf{Reinforcement Learning}: the agent performs actions \(a_1, ..., a_n\) that effect the environment and receives a reward \(r\). The agent learns to maximize its long term reward. To do so, it needs:
-    \begin{itemize}
-        \item decision process;
-        \item reward system;
-        \item long term expectations;
-        \item learning sequence of actions.
-    \end{itemize}
-\end{enumerate}
-
-The most effective of these types of machine learning agents are the reinforcement learning ones, as they can learn from their own actions and experience, by considering their ultimate success or failure. In reinforcement learning, the agent perceives, at time \(t_0\), the environment to be in state \(s_{t_0}\) and decides to perform an action \(a_{t_0}\). As a result, in the next time step \(t_0+1\), the environment changes to state \(s_{t_0+1}\) and the agent receives a reward \(r_{t_0+1}\). 
-
-The goal of the agent is to maximize the total amount of reward received by computing an action-value function that maps state-action pairs to expected payoffs:
-\[Q(s_t, a_t) \to \textnormal{payoff}\]
-or a state-value function mapping to expected payoffs:
-\[V(s_t) \to \textnormal{payoff}\]
-
-\subsection{Action Selection \& Policy}
-At each time step, the agent must decide what action to take in step \(t=t_0\) based an its current evaluation of the expected payoff in \(s_t\) using a \textbf{policy function}. At any given point in time, the policy function \(\pi(s_t)\) selects what action the agent should perform based on its payoff evaluation.
-
-When the correct action to take is not immediately obvious, an agent may need to consider a sequence of actions that lead to a goal state or, for short, to plan ahead of time. Such an agent is called \textbf{problem-solving agent} and the computational process is called \textbf{search}. The policy can be of two main types:
-\begin{enumerate}
-    \item deterministic: the policy function can be modeled as \(\pi: S \to A\). This type of policy can be conveniently represented as a table.
-    \item stochastic: the policy function maps each state to a probability distribution over the actions. The function can be modeled as \(\pi: S\times A\to R\), which returns the probability of selecting the action \(a\) in state \(s\). Since \(\pi(s, a)\) is a probability distribution, it returns a value between 0 and 1, and the sum over all the actions is always 1.
-\end{enumerate}
-
-\
-In order to obtain the maximum amount of reward, the agent must prefer actions that has tried in the past and found to lead to a high payoff. However, to discover those actions, it has to try actions that has never selected before. So the agent needs to find a trade-off between exploration of new actions and the exploitation of promising actions. This is called \textbf{exploration-exploitation dilemma}. 
-
-Policies can be further divided into two categories:
-\begin{enumerate}
-    \item Greedy policies: for each state the policy deterministically selects an action with maximal value.
-    \item \(\varepsilon\)-Greedy policies: with probability \(\varepsilon\) the policy selects a random action and with probability \(1-\varepsilon\) selects an action promising the highest payoff.
-\end{enumerate}
-
-\subsection{Environment}
-The environment must satisfy the Markov property: the next state \(s_{t+1}\) and reward \(r_{t+1}\) only depend on the current state \(s_t\) and the taken action \(a_t\). Thus, the environment can be modeled as Markov Decision Process (MDP for short), which has a one-step dynamic described by the probability distribution \(p(s_{t+1}, r_{t+1}|s_t, a_t)\) such that:
-\[p:S \times R \times S \times A \to [0, 1]\]
-\[\sum_{s'\in S}\sum_{r\in R} p(s', r| s, a) = 1 \;\; \forall s \in S, \forall a \in A(s)\]
-
-\subsection{Expected Payoff}
-In reinforcement learning, the agent has to maximize the reward it receives in the long run, such that
-\[G_t = r_{t+1} + r_{t+2} + ... + r_{t+k} + ... \to \infty\]
-As shown, the problem with the \(G\) function is that it tends to add up to infinity. To provide an upper bound to the payoff, we introduce a discount factor \(\gamma\), such that \(0 < \gamma < 1\) for future rewards, obtaining the following function
-\[G_t = r_{t+1} + \gamma \cdot r_{t+2} + \gamma^2 \cdot r_{t+3} + ... + \gamma^{k-1} r_{t+k} + ... < \infty \]
-
-Thus, the expected reward to maximize would be defined as
-\[\mathbb{E}[G_t] = \mathbb{E}\left[\sum_{k=0}^{\infty}\gamma^k r_{t+k+1}\right]\]
-
-\subsection{Value Function}
-The action-value function \(Q(s_t, a_t)\) estimates the expected future payoff when performing action \(a_t\) in state \(s_t\). The state-value function \(V(s_t)\) estimates the expected future payoff starting from state \(s_t\). Both functions can be decomposed as the sum of the immediate reward received \(r_{t+1}\) and the future rewards, so they become:
-\[V(s) = \mathbb{E}[r_{t+1}+\gamma V(s_{t+1}|_{s_t=s})]\]
-\[Q(s,a) = \mathbb{E}[r_{t+1}+\gamma  V(s_{t+1}|_{s_t =s, a_t = a})]\]
-
-An agent based on the \(Q\) function is called a \textbf{Q-learning agent}. At the beginning, the table \(Q(\cdot, \cdot)\) is filled with random values, but at any time \(t\) the table is filled with the values provided by the following formula:
-\[Q(s_t, a_t) = Q(s_t, a_t) + \beta(r_{t+1} + \gamma  \max_{a\in A}Q(s_{t+1}, a) - Q(s_t, a_t)) \]
-where:
-\begin{itemize}
-    \item \(\gamma\) is the discount factor;
-    \item \(\beta\) is the learning rate;
-    \item \(\pi(s_t, a_t)\) is the action selection strategy: the \(\varepsilon\)-greedy policy is commonly used during learning, but sufficient exploration must guarantee to tackle the exploration-exploitation dilemma.
-\end{itemize}
-
-Tabular representation in q-learning agents is mostly infeasible in practice so approximators must be used. Reinforcement learning computes an unknown value function while also trying to approximate it. Approximators work on intermediate estimates while providing information for the learning agent. 
-
 \newpage
 \section{Solving Problems by Searching}
 We will consider the simplest of environments only: episodic, single agent, fully observable, static, deterministic, discrete and known.
@@ -654,4 +555,257 @@ One effective selection policy is the \textbf{upper confidence bounds applied to
 
 \noindent where \(U(n)\) is the total utility of all playouts that went through node \(n\), \(N(n)\) is the number of playouts through node \(n\), and \(Parent(n)\) is the parent node of \(n\) in the tree. Thus, the first term of the equation is the exploitation term, which calculates the average utility of \(n\). The second term of the equation, the one with the square root, is the exploration term. We see that in the numerator we have the logarithm of the number of times we have explored the parent of the current node: this means that if we are selecting \(n\) some non zero percentage of the time, the exploration term goes to zero as the counts increases, and eventually the playouts are given to the node with the highest average utility. \(C\) is a constant that balances exploitation and exploration.
 
+\newpage
+\section{Learning Agents}
+Any type of agent, such as model-based, goal-based or utility-based, can be built as a learning agent to improve their performance. Learning allows the agent to operate in a initially unknown environment and to become more competent than its initial knowledge alone might allow. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/Learning Agent.jpg}
+    \caption{Learning Agent}
+    \label{fig:learning_agent}
+\end{figure}
+
+It can be divided in four conceptual components:
+\begin{enumerate}
+    \item Learning element: responsible for making improvements;
+    \item Performance element: analyzes the sensor input data and selects external actions. It's what we considered as the entire agent in the previous chapter;
+    \item Critic: provides feedback on the actions taken by the agent and determines how the performance element should be modified to improve performance;
+    \item Problem generator: suggests exploratory actions that lead to new and informative experiences. 
+\end{enumerate}
+\
+\begin{definition}
+    A computer program is said to learn from experience \textbf{E} with respect to some class of tasks \textbf{T} and performance measure \textbf{P}, if it improves with the given experience.
+\end{definition}
+
+Formally, Machine Learning is a field of AI focused on building algorithms capable of learning by extracting knowledge from experience. The goal is to build programs that can make informed decisions on new unseen data.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.75\linewidth]{images/Machine Learning Paradigm.jpg}
+    \caption{Machine Learning Paradigm}
+    \label{fig:machine_learning_paradigm}
+\end{figure}
+
+There are three main types of machine learning agents:
+\begin{enumerate}
+    \item \textbf{Supervised Learning}: given a set of desired outputs \(y_1, ..., y_n\), the agent learns to produce the correct output for a new set of unseen values. The outputs from which the agent learns are called \textbf{labels}.
+    \item \textbf{Unsupervised Learning}: the agent exploits patterns and regularities in the experience collected (encoded as a dataset \(D = x_1, ..., x_n\)). In this case there's no desired output to predict and no feedback. The most common unsupervised learning task is called \textbf{clustering}, which detects useful clusters from the input example.
+    \item \textbf{Reinforcement Learning}: the agent performs actions \(a_1, ..., a_n\) that effect the environment and receives a reward \(r\). The agent learns to maximize its long term reward. To do so, it needs:
+    \begin{itemize}
+        \item decision process;
+        \item reward system;
+        \item long term expectations;
+        \item learning sequence of actions.
+    \end{itemize}
+\end{enumerate}
+
+The most effective of these types of machine learning agents are the reinforcement learning ones, as they can learn from their own actions and experience, by considering their ultimate success or failure. In reinforcement learning, the agent perceives, at time \(t_0\), the environment to be in state \(s_{t_0}\) and decides to perform an action \(a_{t_0}\). As a result, in the next time step \(t_0+1\), the environment changes to state \(s_{t_0+1}\) and the agent receives a reward \(r_{t_0+1}\). 
+
+The goal of the agent is to maximize the total amount of reward received by computing an action-value function that maps state-action pairs to expected payoffs:
+\[Q(s_t, a_t) \to \textnormal{payoff}\]
+or a state-value function mapping to expected payoffs:
+\[V(s_t) \to \textnormal{payoff}\]
+
+\subsection{Action Selection \& Policy}
+At each time step, the agent must decide what action to take in step \(t=t_0\) based an its current evaluation of the expected payoff in \(s_t\) using a \textbf{policy function}. At any given point in time, the policy function \(\pi(s_t)\) selects what action the agent should perform based on its payoff evaluation.
+
+When the correct action to take is not immediately obvious, an agent may need to consider a sequence of actions that lead to a goal state or, for short, to plan ahead of time. Such an agent is called \textbf{problem-solving agent} and the computational process is called \textbf{search}. The policy can be of two main types:
+\begin{enumerate}
+    \item deterministic: the policy function can be modeled as \(\pi: S \to A\). This type of policy can be conveniently represented as a table.
+    \item stochastic: the policy function maps each state to a probability distribution over the actions. The function can be modeled as \(\pi: S\times A\to R\), which returns the probability of selecting the action \(a\) in state \(s\). Since \(\pi(s, a)\) is a probability distribution, it returns a value between 0 and 1, and the sum over all the actions is always 1.
+\end{enumerate}
+
+\
+In order to obtain the maximum amount of reward, the agent must prefer actions that has tried in the past and found to lead to a high payoff. However, to discover those actions, it has to try actions that has never selected before. So the agent needs to find a trade-off between exploration of new actions and the exploitation of promising actions. This is called \textbf{exploration-exploitation dilemma}. 
+
+Policies can be further divided into two categories:
+\begin{enumerate}
+    \item Greedy policies: for each state the policy deterministically selects an action with maximal value.
+    \item \(\varepsilon\)-Greedy policies: with probability \(\varepsilon\) the policy selects a random action and with probability \(1-\varepsilon\) selects an action promising the highest payoff.
+\end{enumerate}
+
+\subsection{Environment}
+The environment must satisfy the Markov property: the next state \(s_{t+1}\) and reward \(r_{t+1}\) only depend on the current state \(s_t\) and the taken action \(a_t\). Thus, the environment can be modeled as Markov Decision Process (MDP for short), which has a one-step dynamic described by the probability distribution \(p(s_{t+1}, r_{t+1}|s_t, a_t)\) such that:
+\[p:S \times R \times S \times A \to [0, 1]\]
+\[\sum_{s'\in S}\sum_{r\in R} p(s', r| s, a) = 1 \;\; \forall s \in S, \forall a \in A(s)\]
+
+\subsection{Expected Payoff}
+In reinforcement learning, the agent has to maximize the reward it receives in the long run, such that
+\[G_t = r_{t+1} + r_{t+2} + ... + r_{t+k} + ... \to \infty\]
+As shown, the problem with the \(G\) function is that it tends to add up to infinity. To provide an upper bound to the payoff, we introduce a discount factor \(\gamma\), such that \(0 < \gamma < 1\) for future rewards, obtaining the following function
+\[G_t = r_{t+1} + \gamma \cdot r_{t+2} + \gamma^2 \cdot r_{t+3} + ... + \gamma^{k-1} r_{t+k} + ... < \infty \]
+
+Thus, the expected reward to maximize would be defined as
+\[\mathbb{E}[G_t] = \mathbb{E}\left[\sum_{k=0}^{\infty}\gamma^k r_{t+k+1}\right] \le R_{max}\frac{1}{1-\gamma}\]
+
+\subsection{Value Function}
+The action-value function \(Q(s_t, a_t)\) estimates the expected future payoff when performing action \(a_t\) in state \(s_t\). The state-value function \(V(s_t)\) estimates the expected future payoff starting from state \(s_t\). Both functions can be decomposed as the sum of the immediate reward received \(r_{t+1}\) and the future rewards, so they become:
+\[V(s) = \mathbb{E}[r_{t+1}+\gamma V(s_{t+1}|_{s_t=s})]\]
+\[Q(s,a) = \mathbb{E}[r_{t+1}+\gamma  V(s_{t+1}|_{s_t =s,\; a_t = a})]\]
+
+An agent based on the \(Q\) function is called a \textbf{Q-learning agent}. At the beginning, the table \(Q(\cdot, \cdot)\) is filled with random values, but at any time \(t\) the table is filled with the values provided by the following formula:
+\[Q(s_t, a_t) = Q(s_t, a_t) + \beta(r_{t+1} + \gamma  \max_{a\in A}Q(s_{t+1}, a) - Q(s_t, a_t)) \]
+where:
+\begin{itemize}
+    \item \(\gamma\) is the discount factor;
+    \item \(\beta\) is the learning rate;
+    \item \(\pi(s_t, a_t)\) is the action selection strategy: the \(\varepsilon\)-greedy policy is commonly used during learning, but sufficient exploration must guarantee to tackle the exploration-exploitation dilemma.
+\end{itemize}
+
+Tabular representation in q-learning agents is mostly infeasible in practice so approximators must be used. Reinforcement learning computes an unknown value function while also trying to approximate it. Approximators work on intermediate estimates while providing information for the learning agent.
+
+\section{Logical Agents}
+A \textbf{logical agent}, also known as a knowledge-based agent, uses a process of reasoning over an internal representation of knowledge to decide what actions to take.
+
+\subsection{Knowledge-Based Agents}
+The central component of a knowledge-based agent is the \textbf{knowledge base}, or \textbf{KB}, which is a set of sentences expressed in a language called \textbf{knowledge representation language}. Each sentence expresses some assertion about the world with which the agent interacts. When a sentence is taken as being given without being derived from other sentences, we call it an \textbf{axiom}.
+
+There must be a way to add new sentences to the knowledge base and a way to query what the agent knows. The standard names for these operations are \textit{TELL} and \textit{ASK}, and may involve some sort of \textbf{inference}, that is deriving new sentences from old ones already known.
+
+Like every other agent, the knowledge-based ones take a percept as input and returns an action as output, but, unlike others, it also maintains a KB, which may initially be filled with some background knowledge.  
+
+Each time the agent's program is called, it does three things:
+\begin{enumerate}
+    \item tells the knowledge base what has perceived of the world.
+    \item asks the knowledge base what action should it perform. In the process of answering to this question, the agent may do extensive reasoning about the current state of the world and how it could change after performing some sequence of actions.
+    \item tells the knowledge base which action was chosen and returns the action so it can be executed by the actuators.
+\end{enumerate}
+
+The knowledge based agent is not an arbitrary program that calculates actions, but it is amenable to a description at the knowledge level, where we need to specify only what the agent knows and what its goals are in order to determine its behavior. This type of agent can be built by simply telling it what it need to know. There are two approaches used to populate the knowledge base:
+\begin{enumerate}
+    \item \textbf{Declarative}: the agent starts with an empty knowledge base and the designer tells it sentences one by one until the agent knows exactly how it should operate in the world.
+    \item \textbf{Procedural}: the desired behaviors of the agent are directly encoded in its program.
+\end{enumerate}
+We can also provide a knowledge-based agent with mechanisms that allow it to learn from itself and the environment in which it operates.
+
+The advantages of this type of agent are multiple:
+\begin{itemize}
+    \item Agents are described according to what they know, not according to how they are implemented.
+    \item Only a core of essential information is explicitly represented, while the rest of the needed information can be derived.
+    \item A logical agent can answer any type of question given the available knowledge, so we are not bounded to the previous search-based ones.
+\end{itemize}
+
+\subsection{Logic}
+As already said, the knowledge base consists of sentences. Every sentence is expressed according to the \textbf{syntax} of the representation language, which specifies all the sentences that are well formed. A logic must also define the \textbf{semantics}, also known as meaning, of these sentences. In standard logic, every sentence must be either true or false. The semantics defines the truth of the sentence with respect to a \textbf{model}, which is a mathematical abstraction that defines a truth value for every relevant sentence.  If a sentence \(\alpha\) is true in a certain model \(m\), we say that \(m\) satisfies \(\alpha\) or that \(m\) is a model for \(\alpha\). We use the notation \(M(\alpha)\) to mean the set of all models of the sentence \(\alpha\).
+
+Logical reasoning involves the relation of logical \textbf{entailment} between sentences, which is the idea that a sentence follows logically from another sentence. In mathematical notation, we write that \(\alpha\models\beta\) to say that sentence \(\alpha\) entails sentence \(\beta\). More formally: \(\alpha\models\beta\) if and only if, in every model in which \(\alpha\) is true, \(\beta\) is also true. Mathematically this notion is expressed as:
+\[\alpha \models \beta \;\; \text{\textit{if and only if}} \;\; M(\alpha) \subseteq M(\beta)\]
+Note that if \(\alpha \models \beta \) then \(\alpha\) is a stronger assertion than \(\beta\), as it rules out more possible models. The procedure of carrying out new sentences from the old ones is also called \textbf{logical inference} \footnote{We can think of the set of all consequences of \textit{KB} as a \textit{haystack} and of \(\alpha\) as a \textit{needle}. Entailment is the needle being in the haystack; inference is like finding it.}. \textbf{Model checking} is the procedure of enumerating all possible models to check that a sentence \(\alpha\) is true in all models in which \textit{KB} is also true, that is \(M(KB)\subseteq M(\alpha)\)
+
+
+If an inference algorithm \(i\) can derive a sentence \(\alpha\) from the \textit{KB}, we write that
+    \[KB \vdash_i\alpha\]
+which means that "\(\alpha\) is derived from \textit{KB} by \textit{i}".
+
+An inference algorithm that derives only entailed sentences is called \textbf{sound} or \textbf{truth-preserving}. This property is highly desirable as unsound algorithms make things up as they proceed. 
+Another highly desirable property of inference algorithms is \textbf{completeness}, which means that it can derive any sentence that is entailed.
+
+\textit{If KB is true in the real world, then any sentence \(\alpha\) derived from KB by a sound inference procedure is also true in the real world}. The correspondence between world and representation is illustrated in figure \ref{fig:Representation vs. Real world}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{Representation and Real World.png}
+    \caption{Sentences are physical configurations of the agent, and reasoning is a process of constructing new physical configurations from older ones. Logical reasoning should ensure that the new configurations represent aspects of the world that actually follow from the aspects that the old configurations represent.}
+    \label{fig:Representation vs. Real world}
+\end{figure}
+
+\subsubsection{Propositional Logic}
+The simplest type of logic is \textbf{propositional logic}. The syntax of propositional logic defines the allowable sentences. \textbf{Atomic sentences} consist of a single \textbf{proposition symbol}, which can be either true or false. There are two proposition symbols with fixed meanings: \textit{True} is the always true proposition and \textit{False} is the always false proposition. Complex sentences are constructed from simpler ones using parentheses and operators called \textbf{logical connectives}. There are five common connectives:
+\begin{itemize}
+    \item [\(\neg\)] is called the \textbf{negation}. A \textbf{literal} is either an atomic sentence (a positive literal) or a negated atomic sentence (a negative literal).
+    \item [\(\wedge\)] is called \textbf{conjunction}. Its parts are \textbf{conjuncts}.
+    \item [\(\vee\)] is called \textbf{disjunction}. Its parts are \textbf{disjuncts}.
+    \item [\(\Rightarrow\)] is called \textbf{implication}. The first part is called \textbf{premise} or \textbf{antecedent}, while the second one is called \textbf{conclusion} or \textbf{consequent}.
+    \item [\(\Leftrightarrow\)] is called \textbf{bi-conditional}.
+\end{itemize}
+
+The semantics of propositional logic defines the rules for determining the truth of a sentence with respect to a particular model: in simpler words, the model defines the truth value for every proposition symbol. The semantics for propositional logic must specify how to compute the truth value of any sentence, given a model, which is done recursively. The rules for atomic sentences are simple:
+\begin{itemize}
+    \item \textit{True} is true in every model and \textit{False} is false in every model.
+    \item The truth value of every other proposition symbol must be specified directly in the model.
+\end{itemize}
+The rules for complex sentences are, obviously, more complex:
+\begin{itemize}
+    \item \(\neg P\) is true iff \(P\) is false in \(m\).
+    \item \(P \wedge Q\) is true iff both \(P\) and \(Q\) are both true in \(m\).
+    \item \(P\vee Q\) is true iff either \(P\) or \(Q\) is true in \(m\).
+    \item \(P\Rightarrow Q\) is true unless \(P\) is true and \(Q\) is false in \(m\).
+    \item \(P \Leftrightarrow Q\) is true iff \(P\) and \(Q\) are both true or both false in \(m\).
+\end{itemize}
+The rules can also be expressed using truth tables that specify the truth value of a complex sentence for each possible assignment of truth values to its components, as follows:
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{c|c||c|c|c|c|c}
+        \(P\) & \(Q\) & \(\neg P\) & \(P \wedge Q\) & \(P\vee Q\) & \(P\Rightarrow Q\) & \(P \Leftrightarrow Q\) \\ \hline\hline
+        0 & 0 & 1 & 0 & 0 & 1 & 1 \\ \hline
+        0 & 1 & 1 & 0 & 1 & 1 & 0 \\ \hline
+        1 & 0 & 0 & 0 & 1 & 0 & 0 \\ \hline
+        1 & 1 & 0 & 1 & 1 & 1 & 1
+    \end{tabular}
+\end{table}
+
+Every complex sentence can be represented using a tree like structure, where every leaf is a simple sentence and every other node is a composition of those sentences through logical connectives.
+
+Propositional logic allows \textbf{partial/disjunctive/negated information}, unlike most data structures and databases. Also, it is \textbf{compositional}, which means that the meaning of a complex sentences is derived from simpler ones. Furthermore, the meaning in propositional logic is context independent, unlike natural language, where the meaning of a sentence may vary based on the context. The only problem with propositional logic is that it has limited expressive power, which makes it harder to express difficult problems.
+
+\subsubsection{Inference Proof}
+Our goal is to decide whether \(KB \models \alpha\) for some sentence \(\alpha\). The first algorithm we can use to reach our goal is \textbf{model-checking} which, as said before, enumerates all the models and checks that \(\alpha\) is true in every model in which \textit{KB} is true. This algorithm is sound because it implements directly the definition of entailment, and it is also complete because it works for any \textit{KB} and \(\alpha\) and always terminate, because there are finitely many models to examine.
+
+Another way to reach our goal is by \textbf{theorem proving}, which applies rules of inference directly to the sentences in our KB to construct a proof of the desired sentence without consulting models. In order to examine this approach we need some basic concepts:
+\begin{itemize}
+    \item \textbf{Logical equivalence}: two sentences \(\alpha\) and \(\beta\) are logically equivalent if they are true in the same set of models. We write 
+        \[\alpha\equiv\beta \;\text{if and only if}\; \alpha\models\beta \;\text{and}\; \beta\models\alpha.\]
+    
+    \item \textbf{Validity}: a sentence is valid if it is true in \underline{\textbf{all}} models. Valid sentences are also known as \textbf{tautologies}. Because the sentence \textit{True} is true in every model, every valid sentence is logically equivalent to \textit{True}.We can derive the \textbf{deduction theorem}:
+    \[\text{For any sentence}\; \alpha \;\text{and}\; \beta, \alpha\models\beta \;\text{if and only if}\; (\alpha\Rightarrow\beta) \;\text{is valid}.\]
+    Hence we can decide if \(\alpha\models\beta\) by proving that \((\alpha\Rightarrow\beta)\equiv True\).
+    
+    \item \textbf{Satisfiability}: a sentence is satisifiable if it is true in \underline{\textbf{some}} model.
+\end{itemize}
+
+\noindent Validity and satisfiability are connected: \(\alpha\) is valid iff \(\neg\alpha\) is unsatisfiable, and \(\alpha\) is satisfiable iff \(\neg\alpha\) is not valid. We obtain the following result:
+\[\alpha\models\beta \;\text{if and only if the sentence}\; (\alpha\wedge\neg\beta) \;\text{is unsatisfiable}.\]
+Which is called proof by \textbf{refutation} or proof by \textbf{contradiction}.
+
+\subsubsection{First Order Logic - FOL}
+Propositional Logic is very limited in what it can express: we can adopt the foundation of propositional logic and build a much more expressive logic, based on \textbf{objects}, \textbf{relations} and \textbf{functions}. This new type of logic is called \textbf{First Order Logic} (or \textbf{FOL}).
+
+The models of a logical language are the formal structures that constitute the possible worlds under consideration. Each model links the vocabulary of the logical sentences to elements of the possible world, so that the truth of any sentence can be determined. In propositional logic, the models simply link proposition symbols to predefined truth tables, while the models in first order logic are much more interesting as they contain objects.
+The \textbf{domain} of a model is the set of objects, called \textbf{domain objects}, it contains. The domain is required to be non empty. The objects in the model may be related in some ways: a relation is just the set of tuples of objects that are related. Models can contain \textbf{binary} relationships, which relate a pair of objects, or unary relations called \textbf{properties}. Certain kind of relationships are best considered as functions, in that a given object must be related to exactly one object in this way.
+
+The basic syntactic elements of FOL are symbols that stand for objects, relations and functions. There are three kind of symbols:
+\begin{enumerate}
+    \item \textbf{Constant symbols}, which stand for objects;
+    \item \textbf{Predicate symbols}, which stand for relations;
+    \item \textbf{Function symbols}, which stand for functions.
+\end{enumerate}
+\noindent Each predicate and function symbol comes with an \textbf{arity}, that describes the number of arguments it receives.
+
+Every model must provide some information to determine if any given sentence is true or false. Thus, in addition, every model includes an interpretation that specifies exactly which objects, relations and functions are referred to by the constant, predicate and function symbols.
+
+A \textbf{term} is a logical expression that refers to an object. Constant symbols are terms, but it's not always convenient to have distinct symbols to name every object, in the same way we do not give a specific name to every object in reality. Considering a term \(f(t_1, ..., t_n)\), the symbol \textit{f} refers to some function in the model (call it \textit{F}), the argument terms refer to objects in the domain (call them \(d_1, ...,d_n\)) and the term as a whole refers to the object that is the value of the function \textit{F} applied to the terms \(d_1, ...,d_n\).
+
+Now we can combine terms and symbols to make \textbf{atomic sentences} that state facts. An atomic sentence, or atom for short, is formed from a predicate symbol optionally followed by a parenthesized list of terms. \textit{An atomic sentence is true in a given model if the relation referred to by the predicate symbol holds among the objects referred to by the arguments}. We can use logical connectives to construct more complex sentences.
+
+Once we have a logic that allows objects, we can use \textbf{quantifiers} to express properties of entire collections of objects, instead of enumerating them one by one. There are two types of quantifiers:
+\begin{itemize}
+    \item [\(\forall\)] - \textbf{universal quantifier}. The sentence \(\forall x P\), where \textit{P} is any logical sentence, says that \textit{P} is true for every object \textit{x}. By asserting the universally quantified sentence, which is equivalent to asserting a whole list of individual implications, we end up asserting the conclusion of the rule just for those objects for which the premise is true and saying nothing about those objects for which the premise is false. Thus, the truth table definition of \(\Rightarrow\) turns to be perfect for writing general rules for universal quantifiers.
+    \item [\(\exists\)] - \textbf{existential quantifiers}. The sentence \(\exists x P\) says that \textit{P} is true for at least one object \textit{x}. Just like \(\Rightarrow\) is the natural connective to use with the universal quantifier, \(\wedge\) is the natural connective to use with \(\exists\).
+\end{itemize}
+
+Consecutive quantifiers of the same type can be written as one quantifier with several variables:
+\[\forall x_1 ... \forall x_n \equiv \forall x_1,...,x_n \;\;\text{and}\;\; \exists x_1, ..., \exists x_n \equiv \exists x_1,...,x_n\]
+In all other cases, the order in which the quantifiers appear is very important, as it can lead to very different statements.
+
+The two quantifiers are actually intimately connected with each other through negation:
+\begin{align*}
+    \forall x P & \equiv \neg\exists x \neg P \\
+    \exists x P & \equiv \neg\forall x \neg P \\
+    \neg\forall x P & \equiv \exists x \neg P \\
+    \neg\exists x P & \equiv \forall x \neg P \\
+\end{align*}
+
+One last symbol in FOL is the \textbf{equality symbol}, which signifies that two terms refer to the same object. Also, the notation \(x\neq y\) is used as an abbreviation for \(\neg(x=y)\).
 \end{document}
