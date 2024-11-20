@@ -714,8 +714,8 @@ Another highly desirable property of inference algorithms is \textbf{completenes
 The simplest type of logic is \textbf{propositional logic}. The syntax of propositional logic defines the allowable sentences. \textbf{Atomic sentences} consist of a single \textbf{proposition symbol}, which can be either true or false. There are two proposition symbols with fixed meanings: \textit{True} is the always true proposition and \textit{False} is the always false proposition. Complex sentences are constructed from simpler ones using parentheses and operators called \textbf{logical connectives}. There are five common connectives:
 \begin{itemize}
     \item [\(\neg\)] is called the \textbf{negation}. A \textbf{literal} is either an atomic sentence (a positive literal) or a negated atomic sentence (a negative literal).
-    \item [\(\wedge\)] is called \textbf{conjunction}. Its parts are \textbf{conjuncts}.
-    \item [\(\vee\)] is called \textbf{disjunction}. Its parts are \textbf{disjuncts}.
+    \item [\(\land\)] is called \textbf{conjunction}. Its parts are \textbf{conjuncts}.
+    \item [\(\lor\)] is called \textbf{disjunction}. Its parts are \textbf{disjuncts}.
     \item [\(\Rightarrow\)] is called \textbf{implication}. The first part is called \textbf{premise} or \textbf{antecedent}, while the second one is called \textbf{conclusion} or \textbf{consequent}.
     \item [\(\Leftrightarrow\)] is called \textbf{bi-conditional}.
 \end{itemize}
@@ -728,8 +728,8 @@ The semantics of propositional logic defines the rules for determining the truth
 The rules for complex sentences are, obviously, more complex:
 \begin{itemize}
     \item \(\neg P\) is true iff \(P\) is false in \(m\).
-    \item \(P \wedge Q\) is true iff both \(P\) and \(Q\) are both true in \(m\).
-    \item \(P\vee Q\) is true iff either \(P\) or \(Q\) is true in \(m\).
+    \item \(P \land Q\) is true iff both \(P\) and \(Q\) are both true in \(m\).
+    \item \(P\lor Q\) is true iff either \(P\) or \(Q\) is true in \(m\).
     \item \(P\Rightarrow Q\) is true unless \(P\) is true and \(Q\) is false in \(m\).
     \item \(P \Leftrightarrow Q\) is true iff \(P\) and \(Q\) are both true or both false in \(m\).
 \end{itemize}
@@ -738,7 +738,7 @@ The rules can also be expressed using truth tables that specify the truth value 
 \begin{table}[h]
     \centering
     \begin{tabular}{c|c||c|c|c|c|c}
-        \(P\) & \(Q\) & \(\neg P\) & \(P \wedge Q\) & \(P\vee Q\) & \(P\Rightarrow Q\) & \(P \Leftrightarrow Q\) \\ \hline\hline
+        \(P\) & \(Q\) & \(\neg P\) & \(P \land Q\) & \(P\lor Q\) & \(P\Rightarrow Q\) & \(P \Leftrightarrow Q\) \\ \hline\hline
         0 & 0 & 1 & 0 & 0 & 1 & 1 \\ \hline
         0 & 1 & 1 & 0 & 1 & 1 & 0 \\ \hline
         1 & 0 & 0 & 0 & 1 & 0 & 0 \\ \hline
@@ -766,7 +766,7 @@ Another way to reach our goal is by \textbf{theorem proving}, which applies rule
 \end{itemize}
 
 \noindent Validity and satisfiability are connected: \(\alpha\) is valid iff \(\neg\alpha\) is unsatisfiable, and \(\alpha\) is satisfiable iff \(\neg\alpha\) is not valid. We obtain the following result:
-\[\alpha\models\beta \;\text{if and only if the sentence}\; (\alpha\wedge\neg\beta) \;\text{is unsatisfiable}.\]
+\[\alpha\models\beta \;\text{if and only if the sentence}\; (\alpha\land\neg\beta) \;\text{is unsatisfiable}.\]
 Which is called proof by \textbf{refutation} or proof by \textbf{contradiction}.
 
 \subsubsection{First Order Logic - FOL}
@@ -792,7 +792,7 @@ Now we can combine terms and symbols to make \textbf{atomic sentences} that stat
 Once we have a logic that allows objects, we can use \textbf{quantifiers} to express properties of entire collections of objects, instead of enumerating them one by one. There are two types of quantifiers:
 \begin{itemize}
     \item [\(\forall\)] - \textbf{universal quantifier}. The sentence \(\forall x P\), where \textit{P} is any logical sentence, says that \textit{P} is true for every object \textit{x}. By asserting the universally quantified sentence, which is equivalent to asserting a whole list of individual implications, we end up asserting the conclusion of the rule just for those objects for which the premise is true and saying nothing about those objects for which the premise is false. Thus, the truth table definition of \(\Rightarrow\) turns to be perfect for writing general rules for universal quantifiers.
-    \item [\(\exists\)] - \textbf{existential quantifiers}. The sentence \(\exists x P\) says that \textit{P} is true for at least one object \textit{x}. Just like \(\Rightarrow\) is the natural connective to use with the universal quantifier, \(\wedge\) is the natural connective to use with \(\exists\).
+    \item [\(\exists\)] - \textbf{existential quantifiers}. The sentence \(\exists x P\) says that \textit{P} is true for at least one object \textit{x}. Just like \(\Rightarrow\) is the natural connective to use with the universal quantifier, \(\land\) is the natural connective to use with \(\exists\).
 \end{itemize}
 
 Consecutive quantifiers of the same type can be written as one quantifier with several variables:
@@ -808,4 +808,75 @@ The two quantifiers are actually intimately connected with each other through ne
 \end{align*}
 
 One last symbol in FOL is the \textbf{equality symbol}, which signifies that two terms refer to the same object. Also, the notation \(x\neq y\) is used as an abbreviation for \(\neg(x=y)\).
+
+\subsection{Inference for Propositional Logic - Model Checking}
+As already said, the goal of inference procedures is to demonstrate that a sentence \(\alpha\) entails another sentence \(\beta\). There are two main methods used:
+\begin{enumerate}
+    \item \textbf{Model-checking}: the algorithm checks if for every model in which \(\alpha\) is true, \(\beta\) is also true.
+    \item \textbf{Theorem-proving}: the algorithm builds a demonstration (or a proof) that leads from \(\alpha\) to \(\beta\) (\(\alpha \vdash_A \beta\)). The algorithm must be:
+    \begin{itemize}
+        \item \textbf{Sound}: everything the algorithm claims to prove is entailed.
+            \[\alpha \vdash_A\beta\Rightarrow\alpha\models\beta\]
+        \item \textbf{Complete}: everything the algorithm entails can be proved. 
+            \[\alpha\models\beta\Rightarrow\alpha\vdash_A\beta\]
+    \end{itemize}        
+\end{enumerate}
+
+Certain applications of propositional logic require the agent to establish whether a sentence \(\alpha\) is or is not satisfiable, which means whether there is an assignment of truth values to the symbol \(\alpha\) that makes it true. The problem of establishing the satisfiability of a set of propositional sentences is known as \textbf{SAT}. The problem of establishing propositional entailment can be reduced to an SAT problem. A solution of SAT is given by reasoning using truth tables, but this is a rather inefficient method. A more efficient one is provided by the DPLL algorithm.
+
+\subsubsection{Reasoning by Truth Tables}
+One first approach we can take to solve the problem is to reason with truth tables. This approach is a form of semantic reasoning, as it directly exploits the definition of entailment: \(\alpha\models\beta\) holds when \(\beta\) is true in every model that makes \(\alpha\) true. In propositional logic, a model is the assignment of truth values to every propositional symbol that appears in \(\alpha\), \(\beta\) or both. The problem is that with \textit{n} symbols we have \(2^n\) different possible models, which corresponds to a row of the truth table. The algorithm computes for every model (each row) the truth values of \(\alpha\) and \(\beta\) by recursively computing the truth values of all subsentences of \(\alpha\) and \(\beta\). At last, we have that \(\alpha\models\beta\) if and only if every row that assign 1 to \(\alpha\), also assigns 1 to \(\beta\). The same logic can be used to demonstrate \(KB\models\beta\), where \(KB=\alpha_1\land\alpha_2\land...\land\alpha_n\).
+
+This process is sound and complete, and it is also decidable as it always terminates. However the described algorithm is very inefficient when many propositional symbols are involved, because it has to compute a table of size \(2^n\cdot M\), where \textit{n} is the number of propositional symbols and \textit{M} is the number of subsentences that appear in the premises and the conclusion. This process is also very unnatural for humans, making it problematic in those applications in which the artificial agent must be able to justify the conclusions of its reasoning process.
+
+\subsubsection{DPLL Algorithm}
+The DPLL Algorithm establishes whether or not a sentence \(\alpha\) is satisfiable. It takes as input a sentence in \textbf{Conjunctive Normal Form} and incrementally tries to build a model of \(\alpha\) from an empty assignment: if a model is built, \(\alpha\) is satisfiable, otherwise, if the algorithm ends without being able to build a model, \(\alpha\) is not satisfiable. Essentially, this algorithm is a recursive, depth-first enumeration of all possible models for a sentence \(\alpha\) given in CNF.
+
+A CNF represents a sentence as a conjunction of clauses, where every clause is a disjunction of literals, which are either a propositional symbol or the negation of a symbol. Every sentence of propositional logic can be transformed in an equivalent sentence in conjunctive normal form. A CNF sentence is often considered as a set of clauses in logical conjunction, which are in turn considered as sets of literal in logical disjunction. For example:
+    \[A\Leftrightarrow(B\lor C) \equiv (\neg A \lor B \lor C) \land (\neg B \lor A) \land (\neg C \lor A)\]
+which can be represented as:
+    \[\{\{\neg A, B, C\}, \{\neg B A\}, \{\neg C, A\}\}\]
+
+A unit clause is a clause with only one literal. Two literals are complementary if they refer to the same propositional symbol but one is the negation of the other, like \textit{A} and \(\neg A\).
+
+In order to transform a PL sentence in the conjunctive normal form we use the De Morgan rules:
+\begin{align*}
+    \alpha \land \beta &\equiv \beta \land \alpha \\
+    \alpha \lor \beta &\equiv \beta \lor \alpha \\
+    (\alpha \land \beta)\land \gamma &\equiv \alpha \land (\beta \land \gamma) \\
+    (\alpha \lor \beta)\lor \gamma &\equiv \alpha \lor (\beta \lor \gamma) \\
+    \neg (\neg \alpha) &\equiv \alpha \\
+    \alpha \Rightarrow \beta &\equiv \neg \beta \Rightarrow \neg \alpha \\
+    \alpha \Rightarrow \beta &\equiv \neg \alpha \lor \beta \\
+    \alpha\Leftrightarrow\beta &\equiv (\alpha\Rightarrow\beta) \land (\beta\Rightarrow\alpha) \\
+    \neg (\alpha \land \beta) &\equiv (\neg \alpha \lor \neg \beta) \\
+    \neg (\alpha \lor \beta) &\equiv (\neg \alpha \land \neg \beta) \\
+    \alpha \land (\beta \lor \gamma) &\equiv (\alpha\land\beta)\lor(\alpha\land\gamma) \\
+    \alpha \lor (\beta \land \gamma) &\equiv (\alpha \lor \beta)\land(\alpha \lor \gamma)
+\end{align*}
+
+\noindent The DPLL algorithm has the following properties:
+\begin{enumerate}
+    \item \textbf{Early termination}: the algorithm detects whether the sentence must be true or false even with a partially completed model. A clause is true if \underline{any} of its literals are true, even if the other literals do not yet have truth values. Early termination avoids examination of entire sub-trees in the search space.
+    \item \textbf{Pure symbol heuristic}: a pure symbol is a symbol that always appears with the same "sign" in all clauses. If a sentence has a model, then it has a model with the pure symbol assigned so as to make their literals true, because doing so can never make a clause false. In determining the purity of a symbol, the algorithm can ignore clauses that are already known to be true in the model constructed so far.
+    \item \textbf{Unit clauses heuristic}: a unit clause, in the context of DPLL, are clauses in which all literal but one are already assigned false by the model (so the truth depends on the unassigned literal). The unit clause heuristic assigns all such symbols before branching on the reminder. One important consequence of this heuristic is that any attempt to prove a literal that is already in the knowledge base will succeed immediately. Also, assigning one unit clause can create another unit clause, producing a cascade of forced assignments called unit propagation.   
+\end{enumerate}
+
+As already said, the problem of establishing propositional entailment can be reduced to a SAT problem, because \(\alpha \models \beta\) holds if and only if, equivalently:
+\begin{itemize}
+    \item every model that satisfies \(\alpha\) also satisfies \(\beta\).
+    \item no model satisfies both \(\alpha\) and \(\neg \beta\).
+    \item \(\alpha \land \neg \beta\) is unsatisfiable.
+\end{itemize}
+
+\noindent In this case the proof of entailment works by refutation: to prove that \(\alpha \models \beta\) it proves that \(\alpha \land \neg \beta\) is unsatisfiable, so it builds a refutation for \(\alpha \land \neg \beta\) by showing the impossibility to find a model.  
+
+A naive implementation of the DPLL algorithm can solve a sentence with approximately 100 variables before being impractical. Some improvements we can make are the following:
+\begin{itemize}
+    \item Variable and value ordering (from the CSP).
+    \item Divide and Conquer.
+    \item Caching unsolvable subcases as extra clauses to avoid redoing them.
+    \item Smart Indexing and incremental recomputation 
+\end{itemize}
+
 \end{document}
