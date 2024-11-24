@@ -830,12 +830,20 @@ One first approach we can take to solve the problem is to reason with truth tabl
 This process is sound and complete, and it is also decidable as it always terminates. However the described algorithm is very inefficient when many propositional symbols are involved, because it has to compute a table of size \(2^n\cdot M\), where \textit{n} is the number of propositional symbols and \textit{M} is the number of subsentences that appear in the premises and the conclusion. This process is also very unnatural for humans, making it problematic in those applications in which the artificial agent must be able to justify the conclusions of its reasoning process.
 
 \subsubsection{DPLL Algorithm}
-The DPLL Algorithm establishes whether or not a sentence \(\alpha\) is satisfiable. It takes as input a sentence in \textbf{Conjunctive Normal Form} and incrementally tries to build a model of \(\alpha\) from an empty assignment: if a model is built, \(\alpha\) is satisfiable, otherwise, if the algorithm ends without being able to build a model, \(\alpha\) is not satisfiable. Essentially, this algorithm is a recursive, depth-first enumeration of all possible models for a sentence \(\alpha\) given in CNF.
+The DPLL Algorithm establishes whether or not a sentence \(\alpha\) is satisfiable. It takes as input a sentence in \textbf{Conjunctive Normal Form} and incrementally tries to build a model of \(\alpha\) from an empty assignment: if a model is built, \(\alpha\) is satisfiable, otherwise, if the algorithm ends without being able to build a model, \(\alpha\) is not satisfiable. Essentially, this algorithm is a recursive, depth-first enumeration of all possible models for a sentence \(\alpha\) in CNF.
 
 A CNF represents a sentence as a conjunction of clauses, where every clause is a disjunction of literals, which are either a propositional symbol or the negation of a symbol. Every sentence of propositional logic can be transformed in an equivalent sentence in conjunctive normal form. A CNF sentence is often considered as a set of clauses in logical conjunction, which are in turn considered as sets of literal in logical disjunction. For example:
     \[A\Leftrightarrow(B\lor C) \equiv (\neg A \lor B \lor C) \land (\neg B \lor A) \land (\neg C \lor A)\]
 which can be represented as:
     \[\{\{\neg A, B, C\}, \{\neg B A\}, \{\neg C, A\}\}\]
+
+Every sentence of propositional logic can be transformed into a CNF clause, following these steps:
+\begin{enumerate}
+    \item Eliminate \(\Leftrightarrow\): \(\alpha \Leftrightarrow \beta \equiv (\alpha \Rightarrow \beta) \land (\beta \Rightarrow \alpha)\).
+    \item Eliminate \(\Rightarrow\): \(\alpha \Rightarrow \beta \equiv \neg \alpha \lor \beta\).
+    \item CNF requires \(\neg\) to appear only in literals, so we move the negation inwards by applying the De Morgan rules:
+    
+\end{enumerate}
 
 A unit clause is a clause with only one literal. Two literals are complementary if they refer to the same propositional symbol but one is the negation of the other, like \textit{A} and \(\neg A\).
 
@@ -878,5 +886,45 @@ A naive implementation of the DPLL algorithm can solve a sentence with approxima
     \item Caching unsolvable subcases as extra clauses to avoid redoing them.
     \item Smart Indexing and incremental recomputation 
 \end{itemize}
+
+\subsection{Inference for Propositional Logic - Theorem Proving}
+As already said in the previous section, an inference procedure aims to demonstrate that \(\alpha \models \beta\) by using an algorithm \textit{A}, that uses propositional logic. 
+
+Inference rules can be applied to derive a proof, which is a chain of conclusions that leads to the desired goal. The best-known rule is the \textbf{Modus Ponens} written as follows:
+\[\frac{\alpha \Rightarrow \beta, \;\; \alpha}{\beta}\]
+This notation means that, whenever any sentence of the form of \(\alpha \Rightarrow \beta\) and \(\alpha\) are given, the sentence \(\beta\) can be inferred.
+
+Another useful inference rule is the \textbf{And-Elimination}, which says that from a conjunction any of the conjuncts can be inferred:
+\[\frac{\alpha \land \beta}{\alpha}\]
+
+Both rules are \textit{sound} and can be used in any sentence where they apply generating inference without the need for enumerating every possible model. 
+
+There are three main algorithms used fro theorem proving.
+
+\subsubsection{Propositional Resolution}
+Propositional resolution is an extremely powerful inference procedure for propositional logic, as it yields a complete inference algorithm when coupled with any complete search algorithm. Propositional resolution works by refutation on any set of sentences in conjunctive normal form. In practice, propositional resolution works by trying to find the empty clause (\(\perp\)) from the set of clauses contained in \(KB \land \neg \alpha\). Resolution applies the resolution rule to all clauses, also to the ones derived by the previous applications of the resolution rule: given two clauses \(C_1\) and \(C_2\) containing respectively \(\ell\) and \(\ell^c\) \footnote{\(\ell^c\) is the complementary of \(\ell\).}, then both clauses can be resolved into a new clause \(C\) called \textbf{resolvent}, such that \(C=(C_1 - \{\ell\})\cup(C_2-\{\ell^c\})\).
+
+This is called the \textbf{unit resolution} inference rule:
+\[\frac{\ell_1 \vee \cdots \vee \ell_k,\;\; m}{\ell_1\vee \cdots \ell_{i-1}\vee\ell_{i+1}\vee \cdots \vee \ell_k}\]
+where \(\ell\) is a literal and \(\ell_i\) and \textit{m} are complementary literals. Thus, this rule takes a clause and a literal and produces a new clause. It can also be generalized to the full resolution rule:
+\[\frac{\ell_1\vee\cdots\vee\ell_k,\;\; m_1\vee\cdots\vee m_n}{\ell_1\vee\cdots\vee\ell_{i-1}\vee\ell_{i+1}\vee\cdots\vee\ell_k\vee m_1 \vee m_{j-1}\vee m_{j+1}\vee\cdots\vee m_n}\]
+where \(\ell_i\) and \(m_j\) are complementary literals. This rule takes two clauses and produces a new clause containing all the literals of the two original clauses except the two complementary literals.
+
+The resolution algorithm works by following these steps:
+\begin{enumerate}
+    \item \(KB \land \neg \alpha\) is converted in CNF.
+    \item The resolution rule is applied to the resulting clauses.
+    \item Each pair that contains complementary literals is resolved to produce a new clause which is added to the set if it is not already present.
+    \item The process continues until one of the following happens:
+    \begin{itemize}
+        \item There are no new clauses that can be added, in which case the \textit{KB} does not entail \(\alpha\).
+        \item Two clauses resolve to yield the \textit{empty} clause, in which case \textit{KB} entails \(\alpha\).
+    \end{itemize}
+\end{enumerate}
+
+The empty clause arises from resolving two contradictory unit clauses (such as \(P \land \neg P\)) and is equivalent to \textit{false} because a disjunction is true only if at least one of its disjuncts is true.
+
+Using propositional resolution, it is possible to build a theorem that is sound and complete for propositional logic.
+
 
 \end{document}
