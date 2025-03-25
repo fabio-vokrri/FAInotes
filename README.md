@@ -9,4 +9,5 @@ Il file [main.tex](./main.tex), una volta compilato, produrrà in output il file
 5. **Adversarial Search and Games**: presentazione di algoritmi di risoluzione di problemi multi-agent in ambienti competitivi, fra cui Minimax search, Alpha-Beta pruning e Monte Carlo Tree Search.
 6. **Learning Agents**: introduzione ad algoritmi di machine learning.
 7. **Logical Agents**: introduzione alla logica proposizionale e alla logica del primo ordine; definizione di agente logico; introduzione ad algoritmi di risoluzione come DPLL e Forward/Backward Chaining.
-8. **Planning**: introduzione alla pianificazione e ad algoritmi associati, come PDDL, Forward Blanning, Backward Planning, SAT-based Planning e Graph Plan; Cenni sulla pianificazione in ambienti non deterministici.
+8. **Planning**: introduzione alla pianificazione e ad algoritmi associati, come PDDL, Forward Blanning, Backward Planning, SAT-based Planning e Graph Plan; cenni sulla pianificazione in ambienti non deterministici.
+9. **Uncertainty**: introduzione alla teoria probabilistica e aller reti Bayesiane.
