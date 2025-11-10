@@ -1,0 +1,86 @@
+\section{Learning Agents} 
+A broad definition of machine learning agent is the following:
+\begin{definition}[Machine Learning]
+    A computer program is said to learn from experience \textbf{E} with respect to some class of tasks \textbf{T} and performance measure \textbf{P}, if it improves its performance with the given experience.
+\end{definition}
+
+Formally, Machine Learning is a field of AI focused on building algorithms capable of learning by \underline{extracting} knowledge from experience. So, the goal is to build programs that can make informed decisions on new unseen data. The information is extracted by the data, not created from it: this means that the knowledge is already embedded in an implicit way in the data it analyzes.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/Machine Learning Paradigm.jpg}
+    \caption{Machine Learning Paradigm}
+    \label{fig:machine_learning_paradigm}
+\end{figure}
+
+\noindent There are three main types of machine learning agents:
+\begin{enumerate}
+    \item \textbf{Supervised Learning}: given a set of desired outputs $y_1, ..., y_n$, the agent learns to produce the correct output for a new set of unseen values. The outputs from which the agent learns are called \textbf{labels}.
+    \item \textbf{Unsupervised Learning}: the agent exploits patterns and regularities in the experience collected (encoded as a dataset $D = x_1, ..., x_n$). In this case there's no desired output to predict and no feedback. The most common unsupervised learning task is called \textbf{clustering}, which detects useful clusters from the input example.
+    \item \textbf{Reinforcement Learning}: the agent performs actions $a_1, ..., a_n$ that effect the environment and receives a reward $r$. The agent learns to maximize its long term reward. To do so, it needs:
+    \begin{itemize}
+        \item decision process.
+        \item reward system.
+        \item long term expectations.
+        \item learning sequence of actions.
+    \end{itemize}
+    This type of machine learning algorithms are the closest one to the ones studied so far.
+\end{enumerate}
+
+The most effective of these types of machine learning agents are the \textit{reinforcement learning} ones, as they can learn from their own actions and experience, by considering their ultimate success or failure. In reinforcement learning, the agent perceives, at time $t_0$, the environment to be in state $s_{t_0}$ and decides to perform an action $a_{t_0}$. As a result, in the next time step $t_0+1$, the environment changes to state $s_{t_0+1}$ and the agent receives a reward $r_{t_0+1}$. 
+
+The goal of the agent is to \textit{maximize the total amount of reward received} by computing an action-value function that maps state-action pairs to expected payoffs:
+    $$Q(s_t, a_t) \to \textnormal{payoff}$$
+or a state-value function mapping to expected payoffs:
+    $$V(s_t) \to \textnormal{payoff}$$
+
+If we know function $Q$, the problem is solved. The point is that reinforcement learning assumes that $Q$ is represented as a table, but in real world problems the number of possible inputs can be too large to compute, so we must find a way to approximate it. The problem is non-trivial.    
+
+\subsection{Action Selection \& Policy}
+At each time step, the agent must decide what action to take in step $t=t_0$ based an its current evaluation of the expected payoff in $s_t$ using a \textbf{policy function}. At any given point in time, the policy function $\pi(s_t)$ selects what action the agent should perform based on its payoff evaluation.
+
+When the correct action to take is not immediately obvious, an agent may need to consider a sequence of actions that lead to a goal state or, for short, to plan ahead of time. Such an agent is called \textbf{problem-solving agent} and the computational process is called \textbf{search}. The policy can be of two main types:
+\begin{enumerate}
+    \item \textbf{deterministic}: the policy function can be modeled as $\pi: S \to A$. This type of policy can be conveniently represented as a table.
+    \item \textbf{stochastic}: the policy function maps each state to a probability distribution over the actions. The function can be modeled as $\pi: S\times A\to R$, which returns the probability of selecting the action $a$ in state $s$. Since $\pi(s, a)$ is a probability distribution, it returns a value between 0 and 1, and the sum over all the actions is always 1.
+\end{enumerate}
+
+\noindent
+In order to obtain the maximum amount of reward, the agent must prefer actions that has tried in the past and found to lead to a high payoff. However, to discover those actions, it has to try actions that has never selected before. So the agent needs to find a trade-off between exploration of new actions and the exploitation of promising actions. This is called \textbf{exploration-exploitation dilemma}, which can be modeled in:
+\begin{enumerate}
+    \item Greedy policies: for each state the policy deterministically selects an action with maximal value.
+    \item $\varepsilon$-Greedy policies: with probability $\varepsilon$ the policy selects a random action and with probability $1-\varepsilon$ selects an action promising the highest payoff.
+\end{enumerate}
+
+\subsection{Environment}
+The environment must satisfy the Markov property: the next state $s_{t+1}$ and reward $r_{t+1}$ only depend on the current state $s_t$ and the taken action $a_t$. Thus, the environment can be modeled as \textbf{Markov Decision Process} (MDP for short), which has a one-step dynamic described by the probability distribution $p(s_{t+1}, r_{t+1}|s_t, a_t)$ such that:
+$$p:S \times R \times S \times A \to [0, 1]$$
+$$\sum_{s'\in S}\sum_{r\in R} p(s', r| s, a) = 1 \;\; \forall s \in S, \forall a \in A(s)$$
+
+\subsection{Expected Payoff}
+In reinforcement learning, the agent has to maximize the reward it receives in the long run, such that
+$$G_t = r_{t+1} + r_{t+2} + ... + r_{t+k} + ... \to \infty$$
+As shown, the problem with the $G$ function is that it tends to add up to infinity. To provide an upper bound to the payoff, we introduce a discount factor $\gamma$, such that $0 < \gamma < 1$ for future rewards, obtaining the following function
+$$G_t = r_{t+1} + \gamma \cdot r_{t+2} + \gamma^2 \cdot r_{t+3} + ... + \gamma^{k-1} r_{t+k} + ... < \infty $$
+
+Thus, the expected reward to maximize would be defined as
+$$\mathbb{E}[G_t] = \mathbb{E}\left[\sum_{k=0}^{\infty}\gamma^k r_{t+k+1}\right] \le R_{max}\frac{1}{1-\gamma}$$
+
+\subsection{Value Function}
+The action-value function $Q(s_t, a_t)$ estimates the expected future payoff when performing action $a_t$ in state $s_t$. The state-value function $V(s_t)$ estimates the expected future payoff starting from state $s_t$. Both functions can be decomposed as the sum of the immediate reward received $r_{t+1}$ and the future rewards, so they become:
+$$V(s) = \mathbb{E}[r_{t+1}+\gamma V(s_{t+1}|_{s_t=s})]$$
+$$Q(s,a) = \mathbb{E}[r_{t+1}+\gamma  V(s_{t+1}|_{s_t =s,\; a_t = a})]$$
+
+An agent based on the $Q$ function is called a \textbf{Q-learning agent}. At the beginning, the table $Q(\cdot, \cdot)$ is filled with random values, but at any time $t$ the table is filled with the values provided by the following formula:
+$$Q(s_t, a_t) = Q(s_t, a_t) + \beta(r_{t+1} + \gamma  \max_{a\in A}Q(s_{t+1}, a) - Q(s_t, a_t)) $$
+
+\clearpage
+\noindent
+where:
+\begin{itemize}
+    \item $\gamma$ is the discount factor;
+    \item $\beta$ is the learning rate;
+    \item $\pi(s_t, a_t)$ is the action selection strategy: the $\varepsilon$-greedy policy is commonly used during learning, but sufficient exploration must guarantee to tackle the exploration-exploitation dilemma.
+\end{itemize}
+
+Tabular representation in q-learning agents is mostly infeasible in practice so approximators must be used. Reinforcement learning computes an unknown value function while also trying to approximate it. Approximators work on intermediate estimates while providing information for the learning agent.

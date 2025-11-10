@@ -1,0 +1,172 @@
+\section{Intelligent Agents}
+An agent is anything that can be seen as perceiving its environment through sensors and acting through actuators: it could be a robot or a software program. The environment is a part of the universe whose state we are interested in when designing the agent, that is, what the agent sees and what is effected by the agent's actions.
+
+We use the term \textbf{percept} to refer to the content that the agent's sensors are perceiving. A \textbf{percept sequence} is the complete history of everything the agent has perceived.
+
+An agent's action at any given time depends on its built-in knowledge and on the entire percept sequence observed to date, but not in anything it has not perceived. Mathematically speaking, it can be said that an agent's behavior is described by the agent function that maps any given percept sequence to an action the agent can perform.
+
+\subsection{Good Behavior and Rationality}
+In order to define an agent rational, it must choose the "right" action, which is described by the notion of \textbf{consequentialism}: we evaluate an agent's behavior based on its consequences. When we introduce an agent into the environment, it produces a sequence of actions according to the percepts it receives. These actions cause the environment to go through a sequence of states, and if this sequence is desirable, then the agent has performed well. This notation of desirability is captured by a \textbf{performance measure}, which is the criterion for evaluating the performance of an agent and is initially prompted to the agent by its designer.
+
+The action that the agent must choose in order to be called rational depends on four main thing:
+\begin{enumerate}
+    \item Performance measure, which defines the criteria for success;
+    \item Agent's prior knowledge of the environment;
+    \item Actions that the agent can perform;
+    \item Agent's percept sequence up to date.
+\end{enumerate}
+
+We can finally give a definition of a rational agent:
+\begin{definition}[Rational Agent]
+For each possible percept sequence, a rational agent should select an action that is expected to maximize its performance measure, given the evidence provided by the percept sequence and the built-in knowledge the agent has.
+\end{definition}
+
+Formally, at time $t$ an agent program outputs an action $a(t)$, given the current perception $p(t)$ and all previous perceptions $p(0), p(1), ..., p(t-1)$).
+
+\subsection{Nature of Environments}
+Before approaching the design of a rational agent, we must think about \textbf{task environments}, that are the problems that the agent is trying to solve. The nature of the task environments directly affects the appropriate design for the agent. The range of tasks environments that might arise in AI is vast, but can be categorized as follows:
+\begin{description}
+    \item[Fully v. Partially Observable] If an agent's sensors give it access to the complete state of the environment at each point in time, then we say that the task environment is fully observable.
+    A task environment is effectively fully observable if the sensors detect all aspects that are relevant to the choice of action. 
+    Fully observable environments are convenient because the agent doesn't need to maintain any interval state to keep track of the world.
+    An environment could be partially observable because of noisy and inaccurate sensors or because part of the state are missing from the sensor data. If the agent has no sensors, the environment is unobservable.
+
+    \item[Single v. Multi Agent] Whether or not there are more than one agent operating in the task environment. But not all actors in an environment can be considered agents. A key factor to identify an agent is whether an entity behavior is best described as maximizing a performance measure whose value depends on another agent's behavior. 
+    If an entity is trying to maximize its performance measure by minimizing another agent's performance measure, then we can call the environment \textbf{competitive}, otherwise is called \textbf{cooperative}.
+
+    \item[Deterministic v. Non-deterministic] If the next state of the environment is completely determined by the current state and the action executed by the agent (or agents), then we can say that the environment is deterministic, otherwise is non-deterministic.
+    If the environment is partially observable, it could appear to be non-deterministic. Furthermore, we say that the model is \textbf{stochastic} if it explicitly deals with quantified probabilities and it is non-deterministic if the probabilities are listed, but not quantified.
+
+    \item[Episodic v. Sequential] In an episodic task environment, the agent's experience is divided into atomic episodes, in which the agent receives a single percept and performs a single action. Furthermore, the next episode does not depend on the actions taken in previous episodes. In sequential environments, on the other hand, the current decision can effect future decisions.
+
+    \item[Static v. Dynamic] If the environment can change while an agent is deliberating, the environment is said to be dynamic for that agent, otherwise is static. Static environments are easy to deal with because the agent needs not to keep looking at the world while deciding on an action to take. If the environment does not change with the passage of time, but the agent's performance score does, the environment is said to be \textbf{semi-dynamic}.
+
+    \item[Discrete v. Continuous] This distinction applies to the state of the environment, to the way time is handled, and the percepts and actions of the agent.
+
+    \item[Known v. Unknown] This distinction does not apply to the environment, but to the agent itself, more precisely to the agent's state of knowledge about the lows of physics of the environment. In a known environment, the outcome of any possible action is given, otherwise the agent must learn how it works in order to make good decisions.
+\end{description}
+
+\subsection{The Structure of Agents}
+The job of an AI is to design an agent's program that produces rational behavior. There are four categories of agent programs:
+\begin{enumerate}
+    \item Simple reflex agent.
+    \item Model-based agent.
+    \item Goal-based agent.
+    \item Utility-based agent.
+\end{enumerate}
+
+Each type of agent combines some components in particular ways to generate actions.
+
+\subsubsection{Simple Reflex Agents}
+The simplest kind of agent is the Simple Reflex Agent, that selects actions on the basis of the current percept, ignoring all the percept history. The actions taken by this kind of agent are given by some condition-action rules, which are simple \code{if-then-else} statements that return a single action based on the current status of the environment.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/Simple Reflex Agent.jpg}
+    \caption{Simple Reflex Agent}
+    \label{fig:simple_reflex_agent}
+\end{figure}
+
+Simple reflex agents are incredibly simple, but they have really limited intelligence. The agent will work only if the environment is fully observable and even a little bit of unobservability can cause the agent to fail. Additionally, this kind of agents can fall into infinite loops of actions that are useless. To avoid this situation, some agents randomize actions, outperforming a deterministic version of the same agent. 
+
+The code of a simple reflex agent is the following:
+\begin{lstlisting} 
+def simple_reflex_agent(percept, rules) -> Action:
+    state = interpret(percept)
+    rule = rules[state]
+    action = rule.action()
+    
+    return action
+\end{lstlisting}
+where the variable \code{rules} is a simple hash table mapping states to rules.
+
+\subsubsection{Model-Based Reflex Agents}
+The most effective way to handle partial observability is for the agent to keep track of the part of the world it cannot see at the moment. The agent should maintain some sort of internal state that depends on the percept history and therefore reflects some of the under-observed aspects of the environment.
+
+\clearpage
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/Model Based Reflex Agent.jpg}
+    \caption{Model Based Reflex Agent}
+    \label{fig:model_based_reflex_agent}
+\end{figure}
+
+To update its internal state information, the agent's program must encode two types of knowledge
+\begin{enumerate}
+    \item Information about how the world changes over time, which can be divided in two parts:
+    \begin{itemize}
+        \item The effects of the agent's actions;
+        \item How the world evolves independently of the agent.
+    \end{itemize}
+    This knowledge about how the world evolves is called a \textbf{transition model};
+    \item Information about how the state of the world is reflected in the agent's percepts. This kind of knowledge is called \textbf{sensor model}.
+\end{enumerate}
+Together, the transition model and the sensor model allow the agent to keep track of the state of the world. An agent that uses such models is called a model-based agent.
+
+A basic algorithm to model a model-based reflex agent is the following:
+\begin{lstlisting} 
+def model_based_reflex_agent(
+    rules, state, action=None, transition_model, sensor_model
+) -> Action:
+    state = state.update(action, transition_model, sensor_model)
+    rule = rules[state]
+    action = rule.action
+
+    return action
+\end{lstlisting}
+
+\subsubsection{Goal-Based Agents}
+Knowing something about the current state of the environment is not always enough to decide what to do. As well as the current state description, the agent needs some sort of \textbf{goal}, which are pieces of information that describe desirable situations. The decision making part of this type of agent is different from the condition-action rules found in the model based reflex agents, in that involves some considerations of the future.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/Goal Based Agent.jpg}
+    \caption{Goal Based Agent}
+    \label{fig:goal_based_agent}
+\end{figure}
+
+Agents of this kind may appear less efficient than the ones analyzed up to now, but in reality they are more flexible because the knowledge that supports its decisions is represented explicitly and can be modified, simply by specifying the new goal.
+
+\subsubsection{Utility-Based Agents}
+Goals alone are not enough to produce high quality behavior in most environments, because they only provide a crude distinction between "happy" and "unhappy" states. A so called \textbf{utility function} provides a way in which the likelihood of success can be weighted against the importance of the goals, and can help identify the best trade-off between conflicting goals.
+
+An agent's utility function is an internalization of the performance measure. Provided that the internal utility function and the external performance measure are in agreement, an agent that chooses actions to maximize its utility function will be rational according to the external performance measure. 
+
+\clearpage
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/Utility Based Agent.jpg}
+    \caption{Utility Based Agent}
+    \label{fig:utility_based_agent}
+\end{figure}
+
+There are two cases where goals are inadequate, but utility-based agents can still make rational decisions:
+\begin{enumerate}
+    \item Where there are conflicting goals but only some of them can be achieved: in this case the utility function specifies the right trade-off between the two goals.
+    \item Where there are several goals that the agent can aim for, none of which can be achieved with certainty: in this case the utility function provides a way in which the likelihood of success can be weighted against the importance of the goal.
+\end{enumerate}
+
+\subsubsection{Learning Agents}
+Any type of agent, such as model-based, goal-based or utility-based, can be built as a learning agent to improve their performance. Learning allows the agent to operate in a initially unknown environment and to become more competent than its initial knowledge alone might allow. It can be divided in four conceptual components:
+\begin{enumerate}
+    \item \textbf{Learning element}: responsible for making improvements.
+    \item \textbf{Performance element}: analyzes the sensor input data and selects external actions. It's what we considered as the entire agent in the previous chapter.
+    \item \textbf{Critic}: provides feedback on the actions taken by the agent and determines how the performance element should be modified to improve performance. In other words, it tells the learning element how well the agent is doing with respect to a fixed performance standard. 
+    \item \textbf{Problem generator}: suggests exploratory actions that lead to new and informative experiences. It is responsible for suggesting suboptimal actions in the short term, in order to discover much better actions for the long term. The problem generator component might identify certain parts of the model that are in need of improvement and suggest experiments.
+\end{enumerate}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/Learning Agent.jpg}
+    \caption{Learning Agent}
+    \label{fig:learning_agent}
+\end{figure}
+
+\subsection{Objective}
+There are three main types of artificial intelligent systems:
+\begin{itemize}
+    \item \textbf{Weak}: an intelligent system that can perform as well as humans. It does not care about the way it achieves the goal, it only focuses on performance.
+    \item \textbf{Strong}: an intelligent system that works by replicating how humans think. It aims to consciously think, not just simulating it.
+    \item \textbf{General}: an intelligent system that can solve an arbitrary wide variety of problems, including novel ones, performing as well as humans. 
+\end{itemize}
+We will focus on weak intelligent systems.
