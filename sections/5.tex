@@ -1,0 +1,144 @@
+\section{Adversarial Search and Games}
+Adversarial search problems are a set of problems in which we explore competitive environments, where two or more agents have conflicting goals.
+
+\subsection{Two-Player Zero-Sum Games}
+The most studied problems in AI are the deterministic, two-player, turn-taking, perfect information (fully observable) and zero-sum (there's always one winning player) games. In game theory the terms \textbf{move} and \textbf{position} are used as synonym for action and state respectively. Games can be formulated as a search problem with an element of uncertainty due to the actions taken by the opponent. In this case, there is no sequence of moves that makes a player win no matter the actions taken by the opponent. At each turn, each player must choose an action without the possibility of exploring the whole state space.
+
+The analyzed games will always involve two players, called \code{MAX} and \code{MIN}, in which \code{MAX} moves first and then the players take turns moving until the game is over. A game can formally be defined with the following elements:
+\begin{itemize}
+    \item $S_0$: the initial state, which specifies how the game is set up at the start;
+    \item \code{TO-MOVE(s)}: the player whose turn it is to move in state $s$;
+    \item \code{ACTIONS(s)}: the set of legal moves the player can do in state $s$;
+    \item \code{RESULT(s, a)}: the transition model, which defines the state resulting from the taking action $a$ in state $s$;
+    \item \code{IS-TERMINAL(s)}: the terminal test, which returns true if the game is in a terminal state, false otherwise;
+    \item \code{UTILITY(s, p)}: the utility function, which defines the final numeric value to player $p$ when the game ends in terminal state $s$.
+\end{itemize}
+
+The initial state, the \code{ACTIONS} function and the \code{RESULT} one define the \textbf{state space graph}, where the vertices represent the states and the edges the moves. As always a \textbf{search tree} can be superimposed on the graph (or on a particular part of it), to determine what moves to make next. We can define the complete \textbf{game tree} as the search tree that follows every possible path all the way down to a terminal state, or up to a maximum depth $h$, based on the available space and time. At the beginning, \code{MAX} builds the game tree \textit{from its perspective} using a depth-first search algorithm. Leaf nodes contain the utility value of the terminal state from the point of view of \code{MAX}, calculated via the utility function or by an evaluation function $e(s)$: high values are good for \code{MAX} and bad for \code{MIN}. Solving the game corresponds to finding the best moves for \code{MAX} (or \code{MIN}) in a state.
+
+\subsection{Optimal Decisions}
+Given a game tree, the optimal strategy can be determined by evaluating the \textbf{minimax} value of each state of the tree, which is indicated with \code{MINIMAX(s)}. This value is the utility for \code{MAX} being in that state, \textit{assuming that both players play optimally}. The minimax value of a terminal state is just its utility. In any terminal space, \code{MAX} prefers to move to a state of maximum value when it's his turn to move, while \code{MIN} prefers a state of minimum, which is minimum value for \code{MAX} (thus maximum value for \code{MIN}). The \code{MINIMAX} function is calculated as follows:
+\small
+\begin{multline*}
+    \textsc{MiniMax(s)}=\\
+        \begin{cases}
+            \textsc{Utility(s, Max)}&if\;\;\textsc{IsTerminal(s)}\\
+            \max_{a\in \textsc{Actions(s)}}\textsc{MiniMax(Result(s,a))}&if\;\;\textsc{ToMove(s) = Max}\\
+            \min_{a\in \textsc{Actions(s)}}\textsc{MiniMax(Result(s,a))}&if\;\;\textsc{ToMove(s) = Min}\\        
+        \end{cases}
+\end{multline*}
+\normalsize
+If \code{MIN} does not play optimally, then \code{MAX} will be at least as good as against an optimal player, possibly better.
+
+In some games it is impossible to build the entire game tree because of space limitations, so the the utility function cannot be computed; instead the evaluation function is computed, which gives an estimated value of the expected utility for the player $p$ in a non-terminal state $s$. The evaluation function can yield positive or negative values, where $e(s) > 0$ is good for \code{MAX}, $e(s) < 0$ is good for \code{MIN} and $e(s) = 0$ is neutral, as they are calculated from the perspective of \code{MAX}. The values for \code{MIN} are obtained by taking the opposite of \code{MAX}'s values, as the games are zero sum. Furthermore, the value of $e(s)$ can be normalized between -1 and +1 to keep values consistent with the utility function. Starting from the values assigned to the leaves and going up to the root of the tree, a minimax value is assigned to each node of the game tree. The minimax value of a node is the estimate of the expected utility for a player in the state corresponding to that node, if both players play optimally.
+
+\subsubsection{Minimax search algorithm}
+By using the \code{MINIMAX} function, we can build a \textbf{minimax search algorithm} that finds the best move for \code{MAX}, by trying all actions and choosing the one whose resulting state has the highest \code{MINIMAX} value. This algorithm is recursive and proceeds all the way down to the leaves of the tree and than backs up the minimax values through the tree as the recursion unwinds.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{algorithms/Minimax.png}
+    \label{fig:minimax_algorithm}
+\end{figure}
+
+The minimax algorithm is optimal when the entire game tree is built and the utility function can be used. The algorithm performs a complete depth-first exploration of the game tree: if the maximum depth of the tree is $m$ and there are $b$ legal moves at each point, then the time complexity of the minimax algorithm is $O(b^m)$ and the space complexity is $O(bm)$. The exponential time complexity makes the minimax algorithm impractical for complex games. By approximating the analysis in various ways, we can write more efficient algorithms.
+
+\subsubsection{Alpha-Beta pruning}
+As seen in the previous section, the number of game states is exponential in the depth of the tree. We can speed up the algorithms by \textbf{pruning} (cutting off) large portions of the tree that make no difference to the outcome. We will examine the \textbf{alpha-beta pruning} technique.
+
+Sometimes the minimax value is independent from the value of other nodes. Let $n$ be a node of the tree, such that the player has a choice of moving to $n$: if the player has a better option either at the same level as $n$ or higher up, the player will never move to $n$. So, once we have found out enough about $n$ to reach this conclusion, we can prune the entire subtree with root in $n$. 
+
+The alpha-beta pruning gets its name from the two extra parameters passed to the \code{MAX-VALUE(}$s, \alpha, \beta$\code{)} function, that describe bounds on the backed-up values that appear anywhere along the path:
+\begin{itemize}
+    \item $\alpha$ is the value of the best choice we have found so far at any choice point along the path for \code{MAX}. We can think of $\alpha$ as "\textit{at least}".
+    \item $\beta$ is the value of the best choice we have found so far at any choice point along the path for \code{MIN}. We can think of $\beta$ as "\textit{at most}".
+\end{itemize}
+
+Alpha-beta search updates the values of $\alpha$ and $\beta$ as it goes along and prunes the remaining branches at a node as soon as the value of the current node is known to be worse than the current $\alpha$ or $\beta$ value for \code{MAX} or \code{MIN} respectively.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{algorithms/Alpha Beta Pruning.png}
+    \label{fig:alpha_beta_pruning_algorithm}
+\end{figure}
+
+In order to make Alpha-beta pruning highly efficient we need to make some clarifications about the order in which we examine the states. One improvement we can make is to examine first the successors that are likely to be best. If this could be done perfectly, alpha-beta pruning would need to examine only $O(b^{m/2})$ nodes to pick the best move, instead of the $O(b^m)$ required by the minimax algorithm. So, alpha-beta pruning with perfect move ordering can solve a tree roughly twice as deep as minimax in the same amount of time. In reality, if the nodes are considered in random order, alpha beta pruning expands on average $O(b^{3h/4})$ nodes, pruning roughly 25\% of the game tree.
+
+Lastly, in game tree search, repeated states can occur because of transpositions, which are different permutations of the move sequence that end up in the same position. These repeated states can cause an exponential increase in search cost. The problem can be addressed with a \textbf{transposition table}, that caches the heuristic values of a state, reducing the time complexity of the alpha-beta pruning algorithm. 
+
+\subsection{Stochastic Games}
+Stochastic Games bring us a little closer to the real world by adding a random element in the computation. In this case, the game tree must include \textbf{chance nodes} (represented in circles) in addition to \code{MAX} and \code{MIN} nodes. The branches leading from each chance node denote the random probability. 
+
+In this kind of games, we still want to pick the move that leads to the best decision. However, positions do not have definite minmax values. Instead, we can only calculate the \textbf{expected value} of a position: the average overall possible outcome of the chance nodes. This leads to the \textbf{expectiminimax value} for games with chance nodes, a generalization of the minimax value for deterministic games. Terminal, \code{MAX} and \code{MIN} nodes work exactly the same as before, but for chance nodes we compute the expected value, which is the sum of the value over all outcomes, weighted by the probability of each chance action:
+\small
+\begin{multline*}
+    \textsc{ExpectiMiniMax(s)} = \\
+    \begin{cases}
+        \textsc{Utility(s, max)} & if \;\; \textsc{IsTerminal(s)} \\
+        \max_{a\in \textsc{Actions(s)}} \textsc{ExpectiMiniMax(Result(s, a))} & if \;\; \textsc{ToMove(s) = Max} \\
+        \min_{a \in \textsc{Actions(s)}} \textsc{ExpectiMiniMax(Result(s, a))} & if \;\; \textsc{ToMove(s) = Min} \\
+        \sum_{r}P(r) \textsc{ExpectiMiniMax(Result(s, a))} & if\;\; \textsc{ToMove(s) = Chance}\\
+    \end{cases}
+\end{multline*}
+\normalsize
+Where $r$ represents the chance event and $result(s, r)$ is the same state as $s$, with the additional fact that the outcome of the event is $r$.
+
+\subsection{Monte Carlo Tree Search}
+For games with large state spaces and high branching factor the algorithms used up to now are impractical. Furthermore, there are cases in which we don't now the domain very well and the branches are all equally promising. In this cases, the best algorithm to use is the Monte Carlo Tree Search. It does not use a heuristic function to solve the problem, but instead the value of a state is determined as the average utility over a number of simulations of complete games starting from that state. A simulation, also called \textbf{playout} or \textbf{rollout}, chooses moves first for one player, then for the other, repeating until a terminal position is reached. At that point, the rules of the game decide who has won or lost, determining the "win percentage".
+
+In order to get useful information from the playout we need a \textbf{playout policy}, that biases the moves towards good ones instead of randomly choosing between the available ones. Once a policy has been chosen, we need to decide from what position to start the playouts and how many do we need to allocate for each position. The simplest solution is to start from the current state of the game and compute $N$ simulations, tracking down which of the possible moves from the current position has the highest win percentage.
+
+While for stochastic games this converges to optimal play as $N$ increases, for most game it is not sufficient: we need a \textbf{selection policy} that focuses on the important parts of the game tree. It should balance two main factors: exploration of states that have had few playouts, and exploitation of states that have done well in past playouts, to get more accurate estimate of their value.
+
+Monte Carlo Tree Search does that by maintaining a search tree and growing it on each iteration of the following steps:
+\begin{enumerate}
+    \item \textbf{Selection}: it descends the game tree starting at the root of the search tree, selecting successors using a selection policy until either a node with an unexpanded branch or a leaf node is reached.
+    \item \textbf{Expansion}: if the node is not a goal, the tree is expanded by generating one or more children nodes.
+    \item \textbf{Simulation}: it performs a playout from the newly generated child node, choosing moves for both players according to the default playout policy. This results in a reward computed according to a reward function.
+    \item \textbf{Back-propagation}: the result of the simulation is used to update all the search tree nodes going up to the root.
+\end{enumerate}
+
+We repeat these four steps either for a set number of iterations or until the allotted time has expired, and then return the move with the highest number of playouts.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{algorithms/Monte Carlo Search.png}
+    \label{fig:monte_carlo_search_algorithm}
+\end{figure}
+
+
+
+\noindent Each node $n$ of the Monte Carlo tree stores a pair of values:
+\begin{enumerate}
+    \item either the number of wins for the player at the root or the number of wins for the player at that node.
+    \item the number of performed simulations that involve the node $n$.
+\end{enumerate}
+In general, the utilities $U(n)$ are stored in each node. 
+
+As already said, the selection policy must be a balance between exploration and exploitation: the agent should visit nodes that promise high chance of winning, but at the same time should try less explored nodes to find new high rewording paths.
+We model this as the \textbf{k-armed bandits problem}, in which an agent must decide between $k$ actions and receive a reward based on the action it chooses. More formally, at time $t$, the agent selects an action $a_t$, and receives a reward $R_t$. The goal of the agent is to maximize the following:
+    $$\sum_{t=1}^{T}R_t$$
+Also, the agent must learn how much it should expect from every action, or the action-value
+    $$Q^*(a) = \mathbb{E}[R_t|A_t=a]$$
+We can estimate it using the sample average method
+    $$Q_t(a) = \frac{\sum_{i=1}^{t-1}R_i}{t-1}$$
+but it is usually calculated incrementally, using the following two methods:
+    $$Q_{t+1}=Q_t+\frac{1}{t}(R_t-Q_t)$$
+    $$Q_{t+1}=Q_t+\alpha(R_t-Q_t)\;\; \text{with}\;\; \alpha\in [0,1]$$
+
+One of the most used policies for choosing the next action based on the current estimates is called $\varepsilon$-greedy, in which a random action is chosen with probability $\varepsilon$ (typically small) and the best action is chosen with probability $1-\varepsilon$. This strategy is a good balance between exploration, which benefits the agent in the long term, and exploitation, which benefits the agent in the short term.
+
+Now, the estimated value of $Q_t(a)$ is subjected to a confidence interval, which outlines an upper bound and a lower bound for the computed value. By choosing the action with the higher upper bound, through iterations, we improve the evaluation. This strategy is the core of the most effective selection policy, called \textbf{Upper Confidence Bound}  (UCB1), which is calculated as follows:
+    
+    $$a_t = \text{arg}\max_a \left (Q_t(a)+c\sqrt{\frac{\ln{t}}{N_t(a)}}\right )$$
+
+\noindent
+in which $t$ is the number of times we run the experiment, $N_t(a)$ is the number of times we performed action $a$ and $Q_t(a)$ is the average estimated value so far. The second term is the upper confidence bound exploration term.
+
+This function cannot directly be applied to the game trees, but can be adapted to obtain the \textbf{upper confidence bounds applied to trees} (\textbf{UCT}). For any given node $n$, the formula is:
+
+$$\text{UCB1}(n) = \frac{U(n)}{N(n)}+C\cdot\sqrt{\frac{\ln{N(Parent(n))}}{N(n)}}$$
+
+\noindent where $U(n)$ is the total utility of all playouts that went through node $n$, $N(n)$ is the number of playouts through node $n$, and $Parent(n)$ is the parent node of $n$ in the tree. Thus, the first term of the equation is the exploitation term, which calculates the average utility of $n$, while the second one, is the exploration term. We see that in the numerator we have the logarithm of the number of times we have explored the parent of the current node: this means that if we are selecting $n$ some non zero percentage of the time, the exploration term goes to zero as the counts increases, and eventually the playouts are given to the node with the highest average utility. $C$ is a constant that balances exploitation and exploration. Based on this policy, we explore the node with the largest UCB1 value.
+
+One major benefit of the Monte Carlo Tree Search is that it does not need an explicit evaluation function to work: random playouts are enough to explore the search space. Thus, it can be employed when an evaluation function is not available or some knowledge about the game is missing.

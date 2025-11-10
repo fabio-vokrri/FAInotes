@@ -1,0 +1,146 @@
+\section{Planning}
+Classical planning is the task of finding a sequence of partially ordered actions to accomplish a goal in a \textit{discrete}, \textit{deterministic}, \textit{fully observable} and \textit{static} environment, using logical sentences to represent states, actions and goals. In other words, classical planning is some sort of specialization of generic search algorithms in which states, actions and goals are represented using logical sentences.
+
+The knowledge for planning problems is represented by a \textbf{factored representation}, specifically:
+\begin{enumerate}
+    \item \textbf{STRIPS} (Stanford Research Institute Problem Solver) language: a simple, but rather expressive language based on a simplified version of first order logic (with no functions).
+    \item \textbf{PDDL} (Planning Domain Definition Language): a family of languages (including STRIPS) used internationally.
+\end{enumerate}
+
+\subsection{PDDL}
+PDDL uses \textbf{constants} to denote objects and \textbf{predicates} to represent properties of the objects and their relationship. A \textbf{state} is represented as a conjunction of \textit{positive ground atomic fluents}, in which positive means that negations are not allowed, ground means with no variables, fluent stands for aspects of the world that change over time and atomic means that there is a single predicate with optional constant arguments. No disjunctions are allowed and uncertainty is not represented.
+
+The assumptions under which the state is represented are the following:
+\begin{itemize}
+    \item \textbf{Unique Name Assumption} (UNA): different constants \underline{always} denote different objects.
+    \item \textbf{Domain Closure Assumption} (DCA): the environment includes only objects denoted by constants.
+    \item \textbf{Closed World Assumption} (CWA): all literals that are not explicitly mentioned in the description of the state are considered to be false.
+\end{itemize}
+
+The \textbf{goals} are just conjunction of positive or negative literals (unlike STRIPS where only positive literals are allowed) also called \textit{sub-goals}, that may contain variables. A goal $g$ is satisfied in a state $s$ when all the sub-goals of $g$ are contained in the representation of the state $s$. Furthermore, a goal $g$ containing a variable is satisfied in state $s$ when there is at least one ground literal in $s$ that matches the variable in the goal.    
+
+\textbf{Actions} consist of a name (denoting the action), a list of variables used, a \textbf{precondition}, that is a conjunction of literals in which variables are allowed, and an \textbf{effect}, formed by a \textit{delete list} (negative literals) and an \textit{add list} (positive literals). An action $a$ is \textbf{applicable} in state $s$ if all positive literals contained in the precondition of $a$ are also contained in the description of $s$, and all the negative literals in the precondition of $a$ are \underline{not} contained in $s$.
+The application of action $a$ in $s$ generates a new state $s'$ by deleting from $s$ all the literals in the delete list (also called negative effects) and by adding the literals in the add list (also called positive effects) to the existing conditions in state $S$, such as
+    
+    $$s' = result(s,\;a) = (s - del(a)) \;\cup\; add(a)$$
+
+An \textbf{action schema} is a family of actions parametrized by one variable $x$ (or more variables), that is instantiated to satisfy the preconditions in a state. Variables in delete list and in add list must also appear in preconditions (otherwise they are unbound) and in the signature of the action schema.
+
+The solutions is called \textbf{plan}, which is an ordered sequence of actions that, starting from an initial state $s_0$, brings to a state $s_g$ that satisfies the goal $g$. As always, the optimal solution is the one with the minimum cost. 
+
+The \textbf{frame problem}, for logical agents, is the problem of representing what remains unchanged after the application of a specific action. In PDDL the frame problem is avoided by two distinct mechanisms:
+\begin{enumerate}
+    \item The things that are changed by an action are only and exactly those specified in the effects (positive and negative literals)
+    \item Anything that is not listed as an effect is left unchanged by the execution of the action
+\end{enumerate}
+
+\noindent
+Therefore, there is no need to specify axioms.
+
+\subsection{Forward Planning}
+We can solve planning problems by applying any of the heuristic search algorithm previously analyzed: we search in the state space from the initial state $s_0$ to a state $s_g$ that satisfies the goal. The states in the search space are ground, where every fluent is either true or false, and the goal is a state where each fluent is positive. The applicable actions in a state, yielded by the $actions(s)$ function, are all the grounded instantiations of the action schemas. To determine the applicable actions, we unify the current state against the preconditions of each action schema. For each unification that successfully results in a substitution, we apply the substitution to the action schema to yield a ground action with no variables.
+
+Any type of search strategy can be used to solve the search problem derived from forward planning. A heuristic function $h(s)$ can be defined by formulating a relaxed version of the problem that is easier to solve by substituting actual actions with actions without some or all preconditions. $h(s)$ is the cost of the optimal solution for the relaxed problem.
+
+Forward planning can be very inefficient due to the huge branching factor as there are multiple actions that are applicable in a certain state, many of which are not relevant to reach the goal state.
+
+\subsection{Backward Planning}
+In backward search, also called \textbf{regression search}, we start at the goal state $s_g$\footnote{
+    Let it be clear that in planning problems the goal $g$ is not a state, but a set of logic sentences. We say "goal state $s_g$" to denote the state that satisfies the goal of the problem.
+} and apply the actions backwards until we find a sequence of steps that reaches the initial state $s_0$. At each step we only consider the \textbf{relevant actions}, which are actions where the effect unifies with one of the goal literals, but with no effect that negates any part of the goal. In other words, an action is relevant for the goal if at least one of the positive effects satisfies a sub-goal.  This significantly reduces the branching factor, particularly in domains where there are many possible actions.
+
+Given a goal $g$ and an action $a$, the regression (which means applying the action in backward direction) from $g$ over $a$ gives a state description $g'$ whose positive and negative literals are given by the followings:
+\begin{align*}
+    pos(g') &= (pos(g) - add(a))\;\cup\; pos(pre(a)) \\
+    neg(g') &= (neg(g) - del(a))\;\cup\;neg(pre(a))
+\end{align*}
+
+\noindent
+This means that the preconditions must have held before, or else the action could not have been executed, but the positive or negative literals that were added or deleted by the action need to have been true before. 
+
+In other words the regression of a goal $g$ through a relevant action $a$ is the less constraining goal $R[g,\;a]$ such that, given a state $s$ that satisfies $R[g,\;a]$, the preconditions of $a$ are satisfied in $s$ and the application of $a$ in $s$ reaches a state $s'$ that satisfies $g$. Furthermore, we cannot perform the regression of a goal $g$ through a relevant action $a$ that negates one of the other sub-goals: that is said to be inconsistent.
+
+\vspace{5mm}
+\begin{algorithmic}
+\Function{Regression}{$g$, $a$}
+    \If{$any(subGoals(g)) \in del\_list(a)$}
+        \State \Return false
+    \EndIf
+    \State $g' \gets precond(A)$
+    \ForAll{$sg$ in $subGoals(g)$}
+        \If{$sg \notin add\_list(a)$}
+            \State $g' \gets g' \cup \{sg\}$
+        \EndIf
+    \EndFor
+    \State \Return $g'$
+\EndFunction
+\end{algorithmic}
+\vspace{5mm}
+    
+Backward planning is usually more efficient than forward planning for its smaller branching factor. However, finding a good heuristic function for backward planning is harder because uses states with variables rather than ground states. Moreover, inconsistencies in goals could waste time and resources if not detected in early stages: this can be done by adding state constraints that allow to prune inconsistent paths early.
+
+\subsection{SAT-Based Planning}
+One of the most efficient and widely used algorithm for planning is based on SAT. SAT-based planners, like \textbf{SATplan}, operate by translating the PDDL problem description into propositional form in a series of steps:
+\begin{enumerate}
+    \item \textit{Propositionalize actions}: for each action schema, form ground propositions by substituting constants for each of the variables.
+    
+    \item \textit{Add action exclusion axioms} saying that no two actions can occur at the same time. Supposing that we have $n$ actions $a_1, ..., a_n$ we can impose restrictions through $n(n-1)/2$ axioms in the form $\neg a_i^t \lor \neg a_j^t$. The axioms must be part of the SATplan representation for every time instant $t$, until a plan is found or the planning effort is abandoned. 
+    
+    \item \textit{Add precondition axioms}: for each ground action $a^t$, add the axiom $a^t\Rightarrow precond(a)^t$, that is, if an action is taken at time $t$, the the preconditions must have been true. The precondition clauses must be part of SATplan representation for every time instant $t$, until a plan is found for the problem or the planning effort is abandoned.
+    
+    \item \textit{Define the initial state}: assert $f^0$ for every fluent $f$ in the problem's initial state, and $\neg f^0$ for every fluent not mentioned in the initial state.
+    
+    \item \textit{Propositionalize the goal}: the goal becomes a disjunct over all of its ground instances, where variables are replaced by constants.
+    
+    \item \textit{Add successor-state axioms}: for each fluent $f$, add and axiom on the form 
+    $$f^{t+1} \Leftrightarrow ActionCausesF^t \lor (f^t\land \neg ActionCausesNotF^t)$$
+    where $ActionCausesF$ stands for a disjunction of all the ground actions that add $f$, and $ActionCausesNotF$ stands for a disjunction of all the ground actions that delete $f$. In other words, in order to deal with the frame problem, SATplan represents the effects of actions indirectly, by using fluent axioms that specify the necessary and sufficient conditions for a fluent to hold at time $t+1$ after an action has been performed at time $t$. The fluent axioms must be part of the SATplan representation for every time instant $t$, until a plan is found or the planning effort is abandoned.
+\end{enumerate}
+
+\noindent
+The planning problem is solved by showing that the goal and the agent's knowledge base are jointly satisfiable, so their conjunction has a logical model. The plan is extracted from the model satisfying the goal and the knowledge base.
+
+Starting from the PDDL representation of the agent's initial state and actions ($KB$), and the goal $g$, the plan is built as follows:
+\begin{itemize}
+    \item SATplan tries to build a plan of length $L$, starting from $L=0$ and then incrementing $L$ by one at each attempt. This step is analogous to the iterative deepening search strategy previously analyzed.
+    \item For every value of $L$ a partially different propositional representation of $KB \land g$ is generated, and the attempt to build a model of such representation is carried out.
+    \item If for some value of $L$ a model of $KB \land g$ is found, a plan of length $L$ is extracted from the model.
+    \item If the available resources (time or space) run out before a model is found, the planning effort fails.
+\end{itemize}
+The basic idea behind SATplan is that if the representation for a given length $L$ is satisfiable, so we can find a model, means that the goal can be achieved from the initial state and thus the planning problem is solved.
+
+The search process followed by SATplan can be described as \textbf{opportunistic}, that is driven by the current opportunity. What actually drives the search in this approach is the unit clause heuristics, resulting in a search process that jumps back and forth along the time axis following problem independent (also called structural) heuristics, thanks to the domain representation adopted. 
+
+So, to summarize, the main idea of the SATplan approach is that, starting from a planning problem formulated in PDDL, it drives a representation in propositional logic that is carefully structured using axioms, in such a way that, if it is satisfiable, then the model allows to retrieve a valid plan that solves the initial planning problem.
+
+\subsection{Graph Plan \& Hierarchical Plan}
+Other algorithms to solve planning problem are Graph Plan and Hierarchical Plan, which are actually employed in practical problems.
+
+In Graph Plan, the main idea is to build a layered graph where the nodes are actions and atomic facts, arranged in alternate levels, while the edges may be of two kinds:
+\begin{enumerate}
+    \item from an atomic fact to the actions for which it is a condition.
+    \item from an action to the atomic facts it makes true or false.
+\end{enumerate}
+
+\noindent
+The first layer of the graph contains true atomic facts that identify the initial state. The algorithm iteratively extends the planning graph, proving that there are no solutions of length $\ell-1$ before looking for plans of length $\ell$ by backward chaining. State-level $n$ consists of literals that could be true after a plan with $n$ steps, while action-level $n$ consists of actions that could be applicable after a plan with $n$ steps.
+
+Hierarchical planning is the most used strategy in practice: the main idea is to decompose actions into sub-actions.
+
+\subsection{Planning in Nondeterministic Domains}
+So far we have analyzed planning problems assuming that the agent plans in an ideal environment, that is fully observable, static, discrete, deterministic, known and with a single agent. This type of environments, though, do not model well the real world: we can extend planning to handle partially observable, nondeterministic and unknown environments, which is closer to real world scenarios. There multiple ways we can extend the classic model of planning problems to be closer to reality:
+\begin{itemize}
+    \item \textbf{Non-deterministic planning}: the agent must take into consideration that states and effects may be partially unknown.
+    \item \textbf{Sensor-less planning}, also known as \textbf{conformant planning}: the agent is unsure on which state it is and cannot perform any observation.
+    \item \textbf{Conditional planning}: the plans contain not only sequence of actions, but also \code{if-then-else} statements.
+    \item \textbf{Multi-agent planning}: the agent may interact with the plans of multiple other agents.
+\end{itemize}
+
+Once a plan is built for the first time, also known as \textbf{offline} planning, it must be executed by the agent in the real world. The agent executes steps of the plan, monitoring the states it is in: if the steps of the plan should have taken the agent to a state $E$, but it observes to be in state $O$, it must re-plan its action. There are several ways:
+\begin{itemize}
+    \item \textbf{Re-Plan}: the agent creates an entirely new plan to reach the goal state, forgetting the old one.
+    \item \textbf{Plan-Repair}: the agent creates a plan to reach the closest state in which the agent should have been according to the old plan. Once there, the agent can resume the old plan.
+    \item \textbf{Serendipity}: the agent may accidentally be closer to the goal state it is trying to reach, so it can create a new plan for the most "convenient" state of the old plan.
+\end{itemize}
+
+Another different approach is called \textbf{online continuous planning}, which interleaves planning and execution: the agent first plans a sequence of actions to reach the goal state, then actuates the first action of the sequence; it repeats this process, considering the state it is in as the initial state of a the new plan, until it reaches the goal.

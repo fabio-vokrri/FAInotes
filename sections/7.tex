@@ -1,0 +1,304 @@
+\section{Logical Agents}
+A logical agent, also known as a \textbf{knowledge-based agent}, uses a process of reasoning over an internal representation of knowledge to decide what actions to take. The basic idea behind logical agents is that the states are represented in a structural way by a set of objects and relations between them. 
+
+\subsection{Knowledge-Based Agents}
+The central component of a logical agent is the \textbf{knowledge base}, or \textbf{KB}, which is a set of sentences expressed in a language called \textbf{knowledge representation language}. Each sentence expresses some assertion about the world with which the agent interacts. When a sentence is taken as being given without being derived from other sentences, we call it an \textbf{axiom}.
+
+There must be a way to add new sentences to the knowledge base and a way to query what the agent knows. The standard names for these operations are \code{TELL} and \code{ASK}, and may involve some sort of \textbf{inference} (reasoning), that is deriving new sentences from old ones already known.
+
+Like every other agent, the knowledge-based ones take a percept as input and returns an action as output, but it also maintains a knowledge base, which may initially be filled with some background knowledge. Ideally, logical agents could determine the next action to perform through reasoning, although in practice agents combine search and reasoning techniques.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{algorithms/KB Agent.png}
+    \label{fig:kb_agent_algorithm}
+\end{figure}
+
+\noindent
+Each time the agent's program is called, it does three things:
+\begin{enumerate}
+    \item tells the knowledge base what has perceived of the world.
+    \item asks the knowledge base what action should it perform. In the process of answering to this question, the agent may do extensive reasoning about the current state of the world and how it could change after performing some sequence of actions.
+    \item tells the knowledge base which action was chosen and returns the action so it can be executed by the actuators.
+\end{enumerate}
+
+The knowledge based agent is not an arbitrary program that calculates actions, but it is amenable to a description at the knowledge level, where we need to specify only what the agent knows and what its goals are in order to determine its behavior. This type of agent can be built by simply telling it what it need to know. There are two approaches used to populate the knowledge base:
+\begin{enumerate}
+    \item \textbf{Declarative}: the agent starts with an empty knowledge base and the designer tells it sentences one by one until the agent knows exactly how it should operate in the world.
+    \item \textbf{Procedural}: the desired behaviors of the agent are directly encoded in its program.
+\end{enumerate}
+We can also provide a knowledge-based agent with mechanisms that allow it to learn from itself and the environment in which it operates.
+
+In logical agents the knowledge base and the inference engine are independent from each other; this means that the code for the engine is general and works for every agent, while the knowledge base is domain specific. So, the advantages of this type of agent are multiple:
+\begin{itemize}
+    \item Agents are described according to what they know, not according to how they are implemented.
+    \item Only a core of essential information is explicitly represented, while the rest of the needed information can be derived.
+    \item A logical agent can answer any type of question given the available knowledge, so we are not bounded to the previous search-based ones.
+\end{itemize}
+
+\subsection{Logic}
+As already said, the knowledge base consists of sentences. Every sentence is expressed according to the \textbf{syntax} of the representation language, which specifies all the sentences that are well formed. A logic must also define the \textbf{semantics}, also known as meaning, of these sentences. In standard logic, every sentence must be either true or false. The semantics defines the truth of the sentence with respect to a \textbf{model}, which is a mathematical abstraction that defines a truth value for every relevant sentence.  If a sentence $\alpha$ is true in a certain model $m$, we say that $m$ satisfies $\alpha$ or that $m$ is a model for $\alpha$. We use the notation $M(\alpha)$ to mean the set of all models of the sentence $\alpha$.
+
+Logical reasoning involves the relation of logical \textbf{entailment} between sentences, which is the idea that a sentence follows logically from another sentence. In mathematical notation, we write that $\alpha\models\beta$ to say that sentence $\alpha$ entails sentence $\beta$. More formally: $\alpha\models\beta$ if and only if, in every model in which $\alpha$ is true, $\beta$ is also true. Mathematically this notion is expressed as:
+$$\alpha \models \beta \;\; \text{\textit{if and only if}} \;\; M(\alpha) \subseteq M(\beta)$$
+Note that if $\alpha \models \beta $ then $\alpha$ is a stronger assertion than $\beta$, as it rules out more possible models. The procedure of carrying out new sentences from the old ones is also called \textbf{logical inference} \footnote{We can think of the set of all consequences of \textit{KB} as a \textit{haystack} and of $\alpha$ as a \textit{needle}. Entailment is the needle being in the haystack; inference is like finding it.}. \textbf{Model checking} is the procedure of enumerating all possible models to check that a sentence $\alpha$ is true in all models in which \textit{KB} is also true, that is $M(KB)\subseteq M(\alpha)$
+
+
+If an inference algorithm $i$ can derive a sentence $\alpha$ from the \textit{KB}, we write that
+    $$KB \vdash_i\alpha$$
+which means that "$\alpha$ is derived from \textit{KB} by \textit{i}".
+
+An inference algorithm that derives only entailed sentences is called \textbf{sound} or \textbf{truth-preserving}. This property is highly desirable as unsound algorithms make things up as they proceed. 
+Another highly desirable property of inference algorithms is \textbf{completeness}, which means that it can derive any sentence that is entailed.
+
+\textit{If KB is true in the real world, then any sentence $\alpha$ derived from KB by a sound inference procedure is also true in the real world}. The correspondence between world and representation is illustrated in figure \ref{fig:representation_v_real_world}.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/Representation and Real World.png}
+    \caption{Sentences are physical configurations of the agent, and reasoning is a process of constructing new physical configurations from older ones. Logical reasoning should ensure that the new configurations represent aspects of the world that actually follow from the aspects that the old configurations represent.}
+    \label{fig:representation_v_real_world}
+\end{figure}
+
+\subsubsection{Propositional Logic}
+The simplest type of logic is \textbf{propositional logic}. The syntax of propositional logic defines the allowable sentences. \textbf{Atomic sentences} consist of a single \textbf{proposition symbol}, which can be either true or false. There are two proposition symbols with fixed meanings: \textit{true} is the always true proposition and \textit{false} is the always false proposition. Complex sentences are constructed from simpler ones using parentheses and operators called \textbf{logical connectives}. There are five common connectives:
+\begin{itemize}
+    \item [$\neg$] is called the \textbf{negation}. A \textbf{literal} is either an atomic sentence (a positive literal) or a negated atomic sentence (a negative literal).
+    \item [$\land$] is called \textbf{conjunction}. Its parts are \textbf{conjuncts}.
+    \item [$\lor$] is called \textbf{disjunction}. Its parts are \textbf{disjuncts}.
+    \item [$\Rightarrow$] is called \textbf{implication}. The first part is called \textbf{premise} or \textbf{antecedent}, while the second one is called \textbf{conclusion} or \textbf{consequent}.
+    \item [$\Leftrightarrow$] is called \textbf{bi-conditional}.
+\end{itemize}
+
+The semantics of propositional logic defines the rules for determining the truth of a sentence with respect to a particular model: in simpler words, the model defines the truth value for every proposition symbol. The semantics for propositional logic must specify how to compute the truth value of any sentence, given a model, which is done recursively. The rules for atomic sentences are simple:
+\begin{itemize}
+    \item \textit{true} is true in every model and \textit{false} is false in every model.
+    \item The truth value of every other proposition symbol must be specified directly in the model.
+\end{itemize}
+
+\noindent
+The rules for complex sentences are, obviously, more complex:
+\begin{itemize}
+    \item $\neg P$ is true iff $P$ is false in $m$.
+    \item $P \land Q$ is true iff both $P$ and $Q$ are both true in $m$.
+    \item $P\lor Q$ is true iff either $P$ or $Q$ is true in $m$.
+    \item $P\Rightarrow Q$ is true unless $P$ is true and $Q$ is false in $m$.
+    \item $P \Leftrightarrow Q$ is true iff $P$ and $Q$ are both true or both false in $m$.
+\end{itemize}
+
+\noindent
+The rules can also be expressed using truth tables that specify the truth value of a complex sentence for each possible assignment of truth values to its components, as follows:
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{c|c||c|c|c|c|c}
+        $P$ & $Q$ & $\neg P$ & $P \land Q$ & $P\lor Q$ & $P\Rightarrow Q$ & $P \Leftrightarrow Q$ \\ \hline\hline
+        0 & 0 & 1 & 0 & 0 & 1 & 1 \\ \hline
+        0 & 1 & 1 & 0 & 1 & 1 & 0 \\ \hline
+        1 & 0 & 0 & 0 & 1 & 0 & 0 \\ \hline
+        1 & 1 & 0 & 1 & 1 & 1 & 1
+    \end{tabular}
+\end{table}
+
+Every complex sentence can be represented using a tree like structure, where every leaf is a simple sentence and every other node is a composition of those sentences through logical connectives.
+
+The advantage of propositional logic is that allows \textbf{partial}, \textbf{disjunctive} and \textbf{negated} information, unlike most data structures and databases. Also, it is \textbf{compositional}, which means that the meaning of a complex sentences is derived from simpler ones. Moreover, the meaning in propositional logic is context independent, unlike natural language, where the meaning of a sentence may vary based on the context. The only problem with propositional logic is that it has limited expressive power, which makes it harder to express difficult problems.
+
+\subsubsection{Inference Proof}
+Our goal is to decide whether $KB \models \alpha$ for some sentence $\alpha$. The first algorithm we can use to reach our goal is \textbf{model-checking} which, as said before, enumerates all the models and checks that $\alpha$ is true in every model in which \textit{KB} is true. This algorithm is sound because it implements directly the definition of entailment, and it is also complete because it works for any \textit{KB} and $\alpha$ and always terminates, because there are a finite number of models to examine.
+
+Another way to reach our goal is by \textbf{theorem proving}, which applies rules of inference directly to the sentences in our KB to construct a proof of the desired sentence without consulting models. In order to examine this approach we need some basic concepts:
+\begin{itemize}
+    \item \textbf{Logical equivalence}: two sentences $\alpha$ and $\beta$ are logically equivalent if they are true in the same set of models. We write 
+        $$\alpha\equiv\beta \;\text{if and only if}\; \alpha\models\beta \;\text{and}\; \beta\models\alpha.$$
+    
+    \item \textbf{Validity}: a sentence is valid if it is true in \underline{all} models. Valid sentences are also known as \textbf{tautologies}. Because the sentence \textit{true} is true in every model, every valid sentence is logically equivalent to \textit{true}. From this, we can derive the \textbf{deduction theorem}:
+        $$\text{For any sentence}\; \alpha \;\text{and}\; \beta, \alpha\models\beta \;\text{if and only if}\; (\alpha\Rightarrow\beta) \;\text{is valid}.$$
+    Hence we can decide if $\alpha\models\beta$ by proving that $(\alpha\Rightarrow\beta)\equiv true$.
+    
+    \item \textbf{Satisfiability}: a sentence is satisfiable if it is true in \underline{\textbf{some}} model.
+\end{itemize}
+
+\noindent Validity and satisfiability are connected: $\alpha$ is valid iff $\neg\alpha$ is unsatisfiable, and $\alpha$ is satisfiable iff $\neg\alpha$ is not valid. We obtain the following result:
+    $$\alpha\models\beta \;\text{if and only if the sentence}\; (\alpha\land\neg\beta) \;\text{is unsatisfiable}.$$
+Which is called proof by \textbf{refutation} or proof by \textbf{contradiction}.
+
+\subsubsection{First Order Logic - FOL}
+Propositional Logic is very limited in what it can express: we can adopt the foundation of propositional logic and build a much more expressive logic, based on \textbf{objects}, \textbf{relations} and \textbf{functions}. This new type of logic is called \textbf{First Order Logic} (or \textbf{FOL}).
+
+The models of a logical language are the formal structures that constitute the possible worlds under consideration. Each model links the vocabulary of the logical sentences to elements of the possible world, so that the truth of any sentence can be determined. In propositional logic, the models simply link proposition symbols to predefined truth tables, while the models in first order logic are much more interesting as they contain objects.
+The \textbf{domain} of a model is the set of objects, called \textbf{domain objects}, it contains. The domain is required to be non-empty. The objects in the model may be related in some ways: a relation is just the set of tuples of objects that are related. Models can contain \textbf{binary} relationships, which relate a pair of objects, or unary relations called \textbf{properties}. Certain kind of relationships are best considered as functions, in that a given object must be related to exactly one object in this way.
+
+The basic syntactic elements of FOL are symbols that stand for objects, relations and functions. There are three kind of symbols:
+\begin{enumerate}
+    \item \textbf{Constant symbols}, which stand for objects.
+    \item \textbf{Predicate symbols}, which stand for relations.
+    \item \textbf{Function symbols}, which stand for functions.
+\end{enumerate}
+\noindent Each predicate and function symbol comes with an \textbf{arity}, that describes the number of arguments it receives.
+
+Every model must provide some information to determine if any given sentence is true or false. Thus, in addition, every model includes an interpretation that specifies exactly which objects, relations and functions are referred to by the constant, predicate and function symbols.
+
+A \textbf{term} is a logical expression that refers to an object. Constant symbols are terms, but it's not always convenient to have distinct symbols to name every object, in the same way we do not give a specific name to every object in reality. Considering a term $f(t_1, ..., t_n)$, the symbol \textit{f} refers to some function in the model (call it \textit{F}), the argument terms refer to objects in the domain (call them $d_1, ...,d_n$) and the term as a whole refers to the object that is the value of the function \textit{F} applied to the terms $d_1, ...,d_n$.
+
+Now we can combine terms and symbols to make \textbf{atomic sentences} that state facts. An atomic sentence, or atom for short, is formed from a predicate symbol optionally followed by a parenthesized list of terms. \textit{An atomic sentence is true in a given model if the relation referred to by the predicate symbol holds among the objects referred to by the arguments}. We can use logical connectives to construct more complex sentences.
+
+Once we have a logic that allows objects, we can use \textbf{quantifiers} to express properties of entire collections of objects, instead of enumerating them one by one. There are two types of quantifiers:
+\begin{itemize}
+    \item [$\forall$] - \textbf{universal quantifier}. The sentence $\forall x P$, where \textit{P} is any logical sentence, says that \textit{P} is true for every object \textit{x}. By asserting the universally quantified sentence, which is equivalent to asserting a whole list of individual implications, we end up asserting the conclusion of the rule just for those objects for which the premise is true and saying nothing about those objects for which the premise is false. Thus, the truth table definition of $\Rightarrow$ turns to be perfect for writing general rules for universal quantifiers.
+    \item [$\exists$] - \textbf{existential quantifiers}. The sentence $\exists x P$ says that \textit{P} is true for at least one object \textit{x}. Just like $\Rightarrow$ is the natural connective to use with the universal quantifier, $\land$ is the natural connective to use with $\exists$.
+\end{itemize}
+
+Consecutive quantifiers of the same type can be written as one quantifier with several variables:
+$$\forall x_1 ... \forall x_n \equiv \forall x_1,...,x_n \;\;\text{and}\;\; \exists x_1, ..., \exists x_n \equiv \exists x_1,...,x_n$$
+In all other cases, the order in which the quantifiers appear is very important, as it can lead to very different statements.
+
+The two quantifiers are actually intimately connected with each other through negation:
+\begin{align*}
+    \forall x P & \equiv \neg\exists x \neg P \\
+    \exists x P & \equiv \neg\forall x \neg P \\
+    \neg\forall x P & \equiv \exists x \neg P \\
+    \neg\exists x P & \equiv \forall x \neg P \\
+\end{align*}
+
+One last symbol in FOL is the \textbf{equality symbol}, which signifies that two terms refer to the same object. Also, the notation $x\neq y$ is used as an abbreviation for $\neg(x=y)$.
+
+\subsection{Inference for Propositional Logic - Model Checking}
+As already said, the goal of inference procedures is to demonstrate that a sentence $\alpha$ entails another sentence $\beta$. There are two main methods used:
+\begin{enumerate}
+    \item \textbf{Model-checking}: an algorithm $A$ checks if for every model in which $\alpha$ is true, $\beta$ is also true.
+    \item \textbf{Theorem-proving}: an algorithm $A$ builds a demonstration (or a proof) that leads from $\alpha$ to $\beta$ ($\alpha \vdash_A \beta$). The algorithm must be:
+    \begin{itemize}
+        \item \textbf{Sound}: everything the algorithm claims to prove is entailed.
+            $$\alpha \vdash_A\beta\Rightarrow\alpha\models\beta$$
+        \item \textbf{Complete}: everything the algorithm entails can be proved. 
+            $$\alpha\models\beta\Rightarrow\alpha\vdash_A\beta$$
+    \end{itemize}        
+\end{enumerate}
+
+Certain applications of propositional logic require the agent to establish whether a sentence $\alpha$ is or is not satisfiable, which means whether there is an assignment of truth values to the symbol $\alpha$ that makes it true. The problem of establishing the satisfiability of a set of propositional sentences is known as \textbf{SAT}. The problem of establishing propositional entailment can be reduced to an SAT problem. A solution of SAT is given by reasoning using truth tables, but this is a rather inefficient method. A more efficient one is provided by the DPLL algorithm.
+
+\subsubsection{Reasoning by Truth Tables}
+One first approach we can take to solve the problem is to reason with truth tables. This approach is a form of semantic reasoning, as it directly exploits the definition of entailment: $\alpha\models\beta$ holds when $\beta$ is true in every model that makes $\alpha$ true. In propositional logic, a model is the assignment of truth values to every propositional symbol that appears in $\alpha$, $\beta$ or both. The problem is that with \textit{n} symbols we have $2^n$ different possible models, which corresponds to a row of the truth table. The algorithm computes for every model (each row) the truth values of $\alpha$ and $\beta$ by recursively computing the truth values of all sub-sentences of $\alpha$ and $\beta$. At last, we have that $\alpha\models\beta$ if and only if every row that assign 1 to $\alpha$, also assigns 1 to $\beta$. The same logic can be used to demonstrate $KB\models\beta$, where $KB=\alpha_1\land\alpha_2\land...\land\alpha_n$.
+
+This process is sound and complete, and it is also decidable as it always terminates. However the described algorithm is very inefficient when many propositional symbols are involved, because it has to compute a table of size $2^n\cdot M$, where \textit{n} is the number of propositional symbols and \textit{M} is the number of sub-sentences that appear in the premises and the conclusion. This process is also very unnatural for humans, making it problematic in those applications in which the artificial agent must be able to justify the conclusions of its reasoning process.
+
+\subsubsection{DPLL Algorithm}
+The DPLL Algorithm establishes whether or not a sentence $\alpha$ is satisfiable. It takes as input a sentence in \textbf{Conjunctive Normal Form} and incrementally tries to build a model of $\alpha$ from an empty assignment: if a model is built, $\alpha$ is satisfiable, otherwise, if the algorithm ends without being able to build a model, $\alpha$ is not satisfiable. Essentially, this algorithm is a recursive, depth-first enumeration of all possible models for a sentence $\alpha$ in CNF.
+
+A CNF represents a sentence as a conjunction of clauses, where every clause is a disjunction of literals, which are either a propositional symbol or the negation of a symbol. Every sentence of propositional logic can be transformed in an equivalent sentence in conjunctive normal form. A CNF sentence is often considered as a set of clauses in logical conjunction, which are in turn considered as sets of literal in logical disjunction. 
+
+Every sentence of propositional logic can be transformed into a CNF clause, following these steps:
+\begin{enumerate}
+    \item Eliminate $\Leftrightarrow$: $\alpha \Leftrightarrow \beta \equiv (\alpha \Rightarrow \beta) \land (\beta \Rightarrow \alpha)$.
+    \item Eliminate $\Rightarrow$: $\alpha \Rightarrow \beta \equiv \neg \alpha \lor \beta$.
+    \item CNF requires $\neg$ to appear only in literals, so we move the negation inwards by applying the De Morgan rules (see appendix \ref{appendix:Logic}).
+\end{enumerate}
+
+A unit clause is a clause with only one literal. Two literals are complementary if they refer to the same propositional symbol but one is the negation of the other, like \textit{A} and $\neg A$. In order to transform a PL sentence in the conjunctive normal form we use the De Morgan rules.
+
+\noindent 
+The DPLL algorithm is essentially a depth first search with back-tracking over logical models, with the following extra steps:
+\begin{enumerate}
+    \item \textbf{Early termination}: the algorithm detects whether the sentence must be true or false even with a partially completed model. A clause is true if \underline{any} of its literals are true, even if the other literals do not yet have truth values. Early termination avoids examination of entire sub-trees in the search space.
+    \item \textbf{Pure symbol heuristic}: a pure symbol is a symbol that always appears with the same "sign" in all clauses. If a sentence has a model, then it has a model with the pure symbol assigned so as to make their literals true, because doing so can never make a clause false. In determining the purity of a symbol, the algorithm can ignore clauses that are already known to be true in the model constructed so far.
+    \item \textbf{Unit clauses heuristic}: a unit clause, in the context of DPLL, are clauses in which all literal but one are already assigned false by the model (so the truth depends on the unassigned literal). The unit clause heuristic assigns all such symbols before branching on the reminder. One important consequence of this heuristic is that any attempt to prove a literal that is already in the knowledge base will succeed immediately. Also, assigning one unit clause can create another unit clause, producing a cascade of forced assignments called unit propagation.  
+\end{enumerate}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{algorithms/DPLL.png}
+    \label{fig:dpll_algorithm}
+\end{figure}
+
+As already said, the problem of establishing propositional entailment can be reduced to a SAT problem, because $\alpha \models \beta$ holds if and only if, equivalently:
+\begin{itemize}
+    \item every model that satisfies $\alpha$ also satisfies $\beta$.
+    \item no model satisfies both $\alpha$ and $\neg \beta$.
+    \item $\alpha \land \neg \beta$ is unsatisfiable.
+\end{itemize}
+
+\noindent 
+In this case the proof of entailment works by refutation: to prove that $\alpha \models \beta$ it proves that $\alpha \land \neg \beta$ is unsatisfiable, so it builds a refutation for $\alpha \land \neg \beta$ by showing the impossibility to find a model.  
+
+A naive implementation of the DPLL algorithm can solve a sentence with approximately 100 variables before being impractical. Some improvements we can make are the following:
+\begin{itemize}
+    \item Variable and value ordering (from the CSP).
+    \item Divide and Conquer.
+    \item Caching unsolvable sub-cases as extra clauses to avoid redoing them.
+    \item Smart Indexing and incremental recomputation tricks so that every step of the DPLL algorithm is efficient (with a time complexity of $O(1)$).
+\end{itemize}
+
+\subsection{Inference for Propositional Logic - Theorem Proving}
+As already said in the previous section, an inference procedure aims to demonstrate that $\alpha \models \beta$ by using an algorithm \textit{A}, that uses propositional logic. 
+
+Inference rules can be applied to derive a proof, which is a chain of conclusions that leads to the desired goal. The best-known rule is the \textbf{Modus Ponens} written as follows:
+$$\frac{\alpha \Rightarrow \beta, \;\; \alpha}{\beta}$$
+This notation means that, whenever any sentence of the form of $\alpha \Rightarrow \beta$ and $\alpha$ are given, the sentence $\beta$ can be inferred.
+
+Another useful inference rule is the \textbf{And-Elimination}, which says that from a conjunction any of the conjuncts can be inferred:
+$$\frac{\alpha \land \beta}{\alpha}$$
+
+Both rules are \textit{sound} and can be used in any sentence where they apply generating inference without the need for enumerating every possible model. 
+
+There are three main algorithms used for theorem proving.
+
+\subsubsection{Propositional Resolution}
+Propositional resolution is an extremely powerful inference procedure for propositional logic, as it yields a complete inference algorithm when coupled with any complete search algorithm. Propositional resolution works by refutation on any set of sentences in conjunctive normal form. In practice, propositional resolution works by trying to find the empty clause ($\perp$) from the set of clauses contained in $KB \land \neg \alpha$. Resolution applies the resolution rule to all clauses, also to the ones derived by the previous applications of the resolution rule: given two clauses $C_1$ and $C_2$ containing respectively $\ell$ and $\ell^c$, then both clauses can be resolved into a new clause $C$ called \textbf{resolvent}, such that $C=(C_1 - \{\ell\})\cup(C_2-\{\ell^c\})$.
+
+This is called the \textbf{unit resolution} inference rule:
+$$\frac{\ell_1 \vee \cdots \vee \ell_k,\;\; m}{\ell_1\vee \cdots \ell_{i-1}\vee\ell_{i+1}\vee \cdots \vee \ell_k}$$
+where $\ell$ is a literal and $\ell_i$ and \textit{m} are complementary literals. Thus, this rule takes a clause and a literal and produces a new clause. It can also be generalized to the full resolution rule:
+$$\frac{\ell_1\vee\cdots\vee\ell_k,\;\; m_1\vee\cdots\vee m_n}{\ell_1\vee\cdots\vee\ell_{i-1}\vee\ell_{i+1}\vee\cdots\vee\ell_k\vee m_1 \vee m_{j-1}\vee m_{j+1}\vee\cdots\vee m_n}$$
+where $\ell_i$ and $m_j$ are complementary literals. This rule takes two clauses and produces a new clause containing all the literals of the two original clauses except the two complementary literals. Using propositional resolution, it is possible to build a theorem prover that is sound and complete for propositional logic: in fact, resolution rule is sound, and the resolvent $C$ is satisfiable if and only if clause $C_1$ and $C_2$ are simultaneously satisfiable, but since resolvent is smaller than parent clauses, resolution stops at some point.
+
+The resolution algorithm works by following these steps:
+\begin{enumerate}
+    \item $KB \land \neg \alpha$ is converted in CNF.
+    \item The resolution rule is applied to the resulting clauses.
+    \item Each pair that contains complementary literals is resolved to produce a new clause which is added to the set if it is not already present.
+    \item The process continues until one of the following happens:
+    \begin{itemize}
+        \item There are no new clauses that can be added, in which case the \textit{KB} does not entail $\alpha$.
+        \item Two clauses resolve to yield the \textit{empty} clause, in which case \textit{KB} entails $\alpha$.
+    \end{itemize}
+\end{enumerate}
+
+The empty clause arises from resolving two contradictory unit clauses (such as $P \land \neg P$) and is equivalent to \textit{false} because a disjunction is true only if at least one of its disjuncts is true. Using propositional resolution, it is possible to build a theorem that is sound and complete for propositional logic.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{algorithms/PL Resolution.png}
+    \label{fig:PL_resolution}
+\end{figure}
+
+\noindent
+There are different resolution strategies we can apply to reach our goal:
+\begin{itemize}
+    \item \textbf{Unit resolution}: at least one of the parent clauses is a unit clause; this strategy is incomplete in general, but complete for Horn clauses.
+    \item \textbf{Input resolution}: at least one of the two parent clauses is a member of the initial set of clauses; this strategy is incomplete in general, but complete for Horn clauses.
+    \item \textbf{Linear resolution}: generalization of the input resolution method in which at least one of the parents is either in the initial set of clauses or in an ancestor of the other parent; this strategy is complete.
+    \item \textbf{Set of support resolution}: given a set of support \textit{S}, which is a subset of the initial clauses such that the clauses not in \textit{S} are satisfiable, every resolution involves a clause in \textit{S} (the resolvent is added to \textit{S}).
+\end{itemize}
+
+\subsubsection{Forward and Backward Chaining}
+The completeness of resolution makes it a very effective inference method, but in many practical situations it is too powerful. Som real-world knowledge based problems contains sentences which satisfy some restriction on their form, which enables more efficient inference algorithms. One of such restrictions is the \textbf{definite clause}, which is a disjunction of literals of which \underline{exactly one} is positive. A slightly more general restriction is the \textbf{Horn clause}, which is a disjunction of literals of which \underline{at most one} is positive. Horn clauses represent rules, facts, goals or empty clauses.
+
+Knowledge bases containing only definite clauses are interesting for three main reasons:
+\begin{enumerate}
+    \item Every definite clause can be written as an implication whose premise in a conjunction of positive literals and whose conclusion is a single positive literal.
+    \item Inference with Horn clauses can be done through \textbf{forward-chaining} and \textbf{backward-chaining} algorithms.
+    \item Deciding entailment with Horn clauses can be done in time that is linear in the size of the knowledge base.
+\end{enumerate}
+
+The forward chaining algorithm determines if a single proposition symbol \textit{q} (called query) is entailed by a knowledge base of definite clauses. It begins from known facts \footnote{
+\textbf{facts} are sentences consisting of a single positive literal.
+} in the knowledge base and, if all the premises of an implication are known, the its conclusion is added to the set of known facts. This process iterates until the query \textit{q} is added or until no further inferences can be made. Forward chaining is a sound and complete algorithm, as every inference is an application of the Modus Ponens and every entailed atomic sentence will be derived. Forward chaining is also said to be \textbf{data-driven reasoning}, that is reasoning in which the focus of the attention starts with the known data. It is a type of "unconscious" processing, which can derive everything that is entailed by the knowledge base, but sometimes does a lot of work which is irrelevant to the specific goal.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{algorithms/PL Resolution Forward Chaining .png}
+    \label{fig:PL_resolution_with_forward_chaining}
+\end{figure}
+
+The backward chaining algorithm works backward from the query: if the query \textit{q} is known to be true, then no work is needed, otherwise, the algorithm finds those implications in the knowledge base whose conclusion is \textit{q}. If all the premises of one of the implications can be proved true, then also \textit{q} is true. Backward chaining is a form of \textbf{goal-directed reasoning}, which is appropriate for problem-solving. Backward chaining is sound and complete for knowledge bases composed of definite clauses, and has a complexity which can be much less than linear in the size of the knowledge base.
