@@ -1,0 +1,299 @@
+\section{Solving Problems by Searching}
+In order to analyze problem solving agents we will consider the simplest of environments only: episodic, single agent, fully observable, static, deterministic, discrete and known.
+
+\subsection{Problem Solving Agents}
+Any problem solving agent follows a process divided in four phases:
+\begin{enumerate}
+    \item \textbf{Goal formulation}: the agent adopts the goals. A goal is useful to organize behavior by limiting the objectives and hence the actions to be considered.
+    \item \textbf{Problem formulation}: the agent devises a description of the states and actions necessary to reach the goal. This description is an abstract model of the relevant parts of the world.
+    \item \textbf{Search}: before taking any action, the agent simulates sequences of actions in its model, searching until it finds a sequence that reaches the goal. Such a sequence of actions is called a \textbf{solution}. The agent may simulate multiple sequences that do not reach the goal, but eventually it will find a solution, or it will find that no solution is possible.
+    \item \textbf{Execution}: the agent executes the actions found in the solution sequence.
+\end{enumerate}
+
+\noindent
+A search problem can be defined as follows:
+\begin{enumerate}
+    \item A set of states in which the environment can be in, called the \textbf{state space}, which can be represented as a graph in which the vertices are the states and the directed edges between them are the actions the agent can perform. 
+    \item The initial state the agent starts in.
+    \item A set of one or more goal states.
+    \item The actions available to the agent in a given state. Given a state \textit{s}, the function \code{ACTION(s)} returns a finite set of actions the agent can perform in the given state. Such state are called \textbf{applicable} in \textit{s};
+    \item A transition model, which describes what each action does. The function \code{RESULT(s, a)} returns the state in which the agent will transition to performing action \textit{a} from state \textit{s}.
+    \item An action cost function, denoted by the \code{ACTION-COST(s, a, s')} function, which returns the numeric cost of performing action \textit{a} in state \textit{s} to reach state \textit{s'}. A problem solving agent should use a cost function that reflects its own performance measure.
+\end{enumerate}
+
+A solution is a path, which is a sequence of actions, that leads form the initial state to a goal state. The total cost of a path is the sum of the individual costs of every action in the path. An \textbf{optimal solution} is the one that has the lowest path cost among all solutions. 
+
+The formulation of the problem is called \textbf{model}, which is an abstract mathematical description of the problem. The first issue we encounter is that it is usually impossible to represent explicitly the entire state space, because of time and memory limitations, so we must simplify the representation as much as possible. In other words, a problem-solving agent must find a solution by exploring only a small portion of the state space. The process of removing irrelevant details from a representation is called \textbf{abstraction}. The abstraction is valid if we can elaborate any abstract solution into a solution in the more detailed world, and it is useful if carrying out each of the actions in the solution is easier than the original problem. A good abstraction involves removing as much details as possible while retaining validity and ensuring that the abstract actions are easy to carry out.
+
+\subsection{Search Algorithms}
+A search algorithm takes a search problem as input and returns a solution. Most of search algorithms are based on a \textbf{search tree data structure} superimposed over the state graph, following various path from the initial state trying to find the one that reaches the goal state. Each node in the search tree corresponds to a state in the state space, while the edges of the tree correspond to actions, as seen in the state graph. The root of the tree corresponds to the initial state of the problem. 
+
+The state space describes the possibly infinite set of states in the world and the actions that allow transitions from one state to another. The search tree describes paths between these states, reaching towards the goal. The search tree may have multiple paths to any given state, but each node has a unique path back to the root of the tree. 
+
+The search tree is created by \textbf{expanding} every node considering the available actions for that state. To do so, we can use the \code{RESULT} function to see where those actions lead to, and generating a new node for each of the resulting states. Now, the algorithm must choose which of these child nodes to consider in order to further expand the tree. This is the core of different search algorithms: they differ from each other for the way they choose the next child to expand in the tree. The set of states that haven't yet been expanded is called \textbf{frontier}, which separates the state space graph into two regions:
+\begin{itemize}
+    \item The region of states that have been analyzed and thus expanded.
+    \item The region of states that haven't yet been expanded.
+\end{itemize}
+
+\subsubsection{Best-First Search}
+A general approach for deciding which node to expand from the frontier is the \code{BEST-FIRST-SEARCH}, in which we choose a node \textit{n} with minimum value of some evaluation function $f(n)$. On each iteration we choose a node of the frontier with the minimum value of $f(n)$, return it if its state is the goal state, or call the \code{EXPAND} function to generate its child nodes. Each child node is added to the frontier if it has not been reached before, or is re-added if it is reached by a path with a lower costing path. The algorithm returns either an indication of failure if a path is not found, or a node that represents a path to a goal. By using different $f(n)$ functions, we obtain different search algorithms.
+
+\begin{lstlisting} 
+def best_first_search(problem, f):
+    node = Node(problem.initial)
+    frontier = PriorityQueue([node], key=f)
+    reached = {problem.initial: node}
+    
+    while frontier:
+        node = frontier.pop()
+        if problem.is_goal(node.state):
+            return node
+        for child in expand(problem, node):
+            s = child.state
+            if s not in reached or child.path_cost < reached[s].path_cost:
+                reached[s] = child
+                frontier.add(child)
+    return failure
+\end{lstlisting}
+
+\newpage
+where the function \code{expand} is implemented as follows:
+\begin{lstlisting} 
+def expand(problem, node):
+    s = node.state
+    for action in problem.actions(s):
+        s1 = problem.result(s, action)
+        cost = node.path_cost + problem.action_cost(s, action, s1)
+        yield Node(s1, node, action, cost)
+\end{lstlisting}
+
+\subsubsection{Search Data Structures}
+A node in the search tree is represented by a data structure that requires four components:
+\begin{enumerate}
+    \item \code{node.STATE}: the state to which the node corresponds.
+    \item \code{node.PARENT}: the node in the tree that generated this node.
+    \item \code{node.ACTION}: the action applied to the parent node's state to generate this node.
+    \item \code{node.PATH-COST}: the total cost of the path from the initial state to this node.
+\end{enumerate}
+
+Following the \code{PARENT} pointers back from a node, allows to recover the states and actions along the path to that node. Doing so from a goal node to the root of the tree we obtain the solution to the problem we are analyzing. 
+
+Also a data structure to store the frontier is needed. Different data structures make up different types of searching algorithms. The main ones are:
+\begin{itemize}
+    \item Priority queue: pops the node with the minimum cost according to some evaluation function.
+    \item Queue: pops the first node added to the queue.
+    \item Stack: pops the last node added to the stack.
+\end{itemize}
+
+The reached states can be stored in a hash table, where each key is a state and each value is a node.
+
+\subsubsection{Redundant Paths}
+In the search tree there might be repeated states, generated by a cycle (called a loopy path) in the graph over which the tree data structure was superimposed. So, there may be cases where the state space has a finite amount of states, but the complete search tree is infinite, because there are no limits on how many times a path can be traversed in a loop. This kind of paths are called \textbf{redundant paths}, which represent an obstacle in solving the search related problems. 
+
+If we can eliminate redundant paths, we can make the searching algorithm order of magnitude faster. There are three main approaches to this issue:
+\begin{enumerate}
+    \item We can store all the previous traversed states in a separate data structure and detect redundant paths in order to keep only the best paths for each state. This approach is appropriate for state spaces where there are many redundant paths and the table of reached states fits in memory.
+    \item We can not worry about repeating paths: in some problems is rare or even impossible for two paths to reach the same state, so we can save memory by not tracking reached states and redundant paths. We call a search algorithm a \textbf{graph search} if it checks for redundant paths and \textbf{tree-like search} if it does not.
+    \item We can compromise and check only for cycles, but not for redundant paths in general. Since each node has a pointer to its parent node, we can check for cycles simply by following the chain of parents and verify if we land on the same state twice.
+\end{enumerate}
+
+\subsubsection{Performance}
+An algorithm's performance can be evaluated in three main ways:
+\begin{enumerate}
+    \item \textbf{Completeness}: whether or not the algorithm is guaranteed to find a solution when there is one and to correctly report failure when there are no solutions.
+    \item \textbf{Cost optimality}: whether or not the algorithm finds the most optimal solution, thus the path with the lowest cost of all solutions.
+    \item \textbf{Time and Space complexity}: how long does the algorithm take to find a solution and how much memory does it need.
+\end{enumerate}
+
+To be complete, a search algorithm must also be \textbf{systematic} in the way it explores an infinite state space, making sure it can eventually reach a goal state which is connected to the initial state. 
+
+The complexity of a search algorithm can be measured in terms of the following parameters:
+\begin{itemize}
+    \item $d$ - depth: the number of actions in an optimal solution.
+    \item $m$: the maximum number of actions in any path.
+    \item $b$ - branching factor: the number of successors of a node that need to be considered. 
+\end{itemize}
+
+When the branching factor is high, the number of nodes grows quickly and so does the problem complexity. When the depth is large, the closest solution requires more exploration of the search tree, making the algorithm slower.
+
+\subsection{Uninformed Search Strategies}
+In uninformed search algorithms no clue is given about how close a state is to the goal and only the information contained in the formulation of the problem itself is used.
+
+\subsubsection{Breadth-First Search}
+When all actions inside the state space have the same cost, an appropriate strategy would be a breadth-first search, in which the root node is expanded, then all its successors are expanded next, then their successors and so on. This algorithm is systematic and is therefore complete even on infinite states spaces.
+
+One implementation of this strategy repeatedly calls the \code{BEST-FIRST-SEARCH} algorithm where the evaluation function $f(n)$ is the depth of the node. However, a more efficient implementation would be with a FIFO queue, giving us the correct order of nodes: new nodes (which are deeper than their parents) go to the back of the queue, and old nodes get expanded first, as they are shallower than the new nodes.
+
+Breadth first search always finds a solution with the minimal number of actions, because when it is generating nodes at depth \textit{d}, it has already generated all the nodes at depth \textit{d}-1: if one of them were a solution, it would have been found and the algorithm would have terminated. This means that it is cost optimal for problems where all the actions have the same cost.
+
+\begin{lstlisting}
+def breadth_first_search(problem):
+    node = Node(problem.initial)    
+    if problem.is_goal(problem.initial):
+        return node
+    
+    frontier = Queue([node])
+    reached = {problem.initial}
+    while frontier:
+        node = frontier.pop()
+        for child in expand(problem, node):
+            s = child.state
+            if problem.is_goal(s):
+                return child
+            if s not in reached:
+                reached.add(s)
+                frontier.appendleft(child)
+    return failure
+\end{lstlisting}
+
+In order to calculate time and space complexity, we imagine that all nodes in the tree have \textit{b} successors. In this case, the root of the tree generates \textit{b} nodes, each of which generates \textit{b} more nodes, obtaining $b^2$ nodes for the second level. Each of these generates \textit{b} more nodes, yielding $b^3$ nodes at the third level and so on. All these generated nodes remain in memory, so both time and space complexity are $O(b^d)$.
+
+\subsubsection{Uniform-Cost Search}
+When actions in the state space have different costs, an obvious choice would be to apply the \code{BEST-FIRST-SEARCH} algorithm, where the evaluation function is the cost of the path from the root to the current node. This type of search is called \textbf{uniform cost search}. The idea behind this type of algorithm is to expand the nodes in waves of uniform path-cost, instead of uniform depth as in the breadth-first search.
+
+\begin{lstlisting}
+def uniform_cost_search(problem):
+    return best_first_search(problem, f=g)
+\end{lstlisting}
+
+The complexity of this algorithm is characterized in terms of $C^*$, which is the cost of the optimal solution, and $\varepsilon > 0$, which is a lower bound on the cost of each action. Then the algorithm's worst case time and space complexity is $O(b^{1+\lfloor C^*/\varepsilon \rfloor})$, which can be much grater than the $O(b^d)$ found for the breadth-first search algorithm. This is because uniform-cost search can explore very large trees of low-cost actions, before analyzing high-cost and perhaps useful actions. Moreover, the uniform-cost search algorithm is complete and cost-optimal, because the first solution it finds will have a cost that is at least as low as the cost of any other node in the frontier.
+
+\subsubsection{Depth-First Search}
+This algorithm always expands the deepest node in the frontier list. The search proceeds immediately to the deepest level of the search tree, where the nodes have no successor. Then, if the goal state is not reached, it "backs up" to the next deepest node that still has unexpanded successors. 
+
+It can be implemented using the \code{BEST-FIRST-SEARCH} algorithm, where the evaluation function is the negative of the depth of the node. Alternatively can be implemented using a LIFO queue (also called stack) to represent the frontier: the generated successor nodes are inserted at the front of the frontier and the most recently generated nodes are selected first.
+
+\begin{lstlisting}
+def depth_first_search(problem):
+    frontier = Stack([Node(problem.initial)])
+    result = failure
+    while frontier:
+        node = frontier.pop()
+        if problem.is_goal(node.state):
+            return node
+        
+        if not is_cycle(node):
+            for child in expand(problem, node):
+                frontier.append(child)
+    return result
+\end{lstlisting}
+
+The depth-first search algorithm is not cost-optimal, as it returns the first solution it finds, even if it is not the cheapest one. For finite state spaces that are trees, it is efficient and complete, but in cyclic state spaces it can get stuck in an infinite loop. For this reason, some implementations of this algorithm check for loops for each new node in the frontier. Finally, for infinite spaces, it is not systematic either, because it can get stuck in infinite path that are not cycles. Thus, depth-first search is incomplete.
+
+Although it has some harsh downfalls, the depth-first search is generally used for its very limited memory usage: this algorithm has much smaller needs for memory, as it doesn't keep track of the reached states at all and it has a small frontier to save in memory. In fact, the depth-first search algorithm has a time complexity of only $O(b\cdot m)$, where $b$ is the branching factor and $m$ is the maximum depth of the tree.
+
+\subsubsection{Depth-Limited Search \& Iterative Deepening Search}
+We can prevent the depth-first search algorithm to go on endless paths by limiting the depth at which the algorithm can go. We call this algorithm \textbf{depth-limited search}, with limit $\ell$: we treat all nodes at that depth as if they had no successor. The time complexity of this algorithm is $O(b^\ell)$ and the space complexity is $O(b\ell)$. Unfortunately, if we choose an inappropriate value of $\ell$, the algorithm will fail to reach a solution and it becomes incomplete again. Sometimes a good depth limit can be chosen based on the problem we are trying to solve, but for most problems we will not know a good depth value until we solve the problem.
+
+\begin{lstlisting}
+def depth_limited_search(problem, limit=10):
+    frontier = Stack([Node(problem.initial)])
+    result = failure
+    while frontier:
+        node = frontier.pop()
+        if problem.is_goal(node.state):
+            return node
+        if len(node) >= limit:
+            result = cutoff
+            continue
+        if not is_cycle(node):
+            for child in expand(problem, node):
+                frontier.append(child)
+    return result
+\end{lstlisting}
+
+\textbf{Iterative deepening search} solves the problem of finding a good value for $\ell$ by trying all values until a solution is found or no solutions were found. This approach combines benefits from the depth-first search and breadth-first search algorithms. In fact, like depth-first search, the memory required is modest, spanning from $O(b d)$ when there is a solution, to $O(b m)$ on finite state spaces with no solutions. Like breadth-first search, iterative deepening search is optimal for problems where all the actions have the same cost, and is complete on finite acyclic state spaces, or on any finite state space when we check nodes for cycles all the way up the path. The time complexity is $O(b^d)$ when there is a solution, or $O(b^m)$ when there is none.
+\begin{lstlisting}
+def iterative_deepening_search(problem):
+    for limit in range(1, sys.maxsize):
+        result = depth_limited_search(problem, limit)
+        if result != cutoff:
+            return result
+\end{lstlisting}
+
+\subsubsection{Bidirectional Search}
+One last strategy we can apply for uninformed search can be to go backward, from the solution to the initial state if the problem is easily reversible. A more efficient way is to combine the two directions into a bidirectional search: this type of search performs two searches in parallel, one \textit{forward} search from the initial state to the goal state, one \textit{backwards} search from a goal state to the initial state.
+
+\subsubsection{Summary}
+
+Tree search algorithms work well when the the state space is represented as a tree-like data structure, while graph search algorithms work well with graphs. For each algorithm analyzed so far, several variants are possible, but there are always trade-offs between memory usage for storing the closed list and the time spent to check it.
+
+
+The following tables compare the characteristics of the main algorithms analyzed so far, where:
+\begin{itemize}
+    \item $b$: number of successors of a node that need to be considered;
+    \item $d$: number of actions in an optimal solution;
+    \item $m$: maximum number of actions in any path;
+    \item $C^*$: cost of the optimal solution;
+    \item $\varepsilon$: lower bound on the cost of each action;
+    \item $\ell$: depth limit;
+\end{itemize}
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lcccc}
+        \multicolumn{1}{l}{} & \multicolumn{2}{c}{\textit{With repeated states}} & \multicolumn{2}{c}{\textit{Without repeated states}} \\
+        \multicolumn{1}{r||}{Search Strategy} & \multicolumn{1}{c|}{Complete} & \multicolumn{1}{c|}{Optimal} & \multicolumn{1}{c|}{Complete} & Optimal \\ \hline \hline
+        \multicolumn{1}{l||}{\texttt{Breadth-First Search}} & \multicolumn{1}{c|}{YES} & \multicolumn{1}{c|}{YES} & \multicolumn{1}{c|}{YES} & YES \\ \hline
+        \multicolumn{1}{l||}{\texttt{Uniform-Cost Search}} & \multicolumn{1}{c|}{YES} & \multicolumn{1}{c|}{YES} & \multicolumn{1}{c|}{YES} & YES \\ \hline
+        \multicolumn{1}{l||}{\texttt{Depth-First Search}} & \multicolumn{1}{c|}{NO} & \multicolumn{1}{c|}{NO} & \multicolumn{1}{c|}{YES} & NO \\ \hline
+        \multicolumn{1}{l||}{\texttt{Limited-Depth Search}} & \multicolumn{1}{c|}{NO} & \multicolumn{1}{c|}{NO} & \multicolumn{1}{c|}{NO} & NO \\ \hline
+        \multicolumn{1}{l||}{\texttt{Iterative Deepening}} & \multicolumn{1}{c|}{YES} & \multicolumn{1}{c|}{YES} & \multicolumn{1}{c|}{YES} & YES
+    \end{tabular}
+    \caption{Strategy comparison}
+    \label{tab:strategy_comparison}
+\end{table}
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{l||c|c}
+        Strategy & S(n) & T(n) \\ \hline \hline
+        \texttt{Breadth-First Search} & $O(b^d)$  & $O(b^{d+1})$ \\ \hline
+        \texttt{Uniform-Cost Search} & $O(b^{1+\lfloor C^*/\varepsilon \rfloor})$ & $O(b^{1+\lfloor C^*/\varepsilon \rfloor})$ \\ \hline
+        \texttt{Depth-First Search} & $O(bm)$ & $O(b^m)$ \\ \hline
+        \texttt{Limited-Depth Search} & $O(b\ell)$ & $O(b^\ell)$ \\ \hline
+        \texttt{Iterative Deepening} & $O(bd)$ & $O(b^d)$ \\
+    \end{tabular}
+    \caption{Strategy Complexity}
+    \label{tab:strategy_complexity}
+\end{table}
+
+\subsection{Informed Search Strategies}
+In informed search algorithms, specific knowledge that is not contained in the problem formulation is exploited to solve the problem itself. This strategy selects a node from the frontier according to an evaluation function $f(n)$, which provides an estimate of how much a node is "promising". There are two main ways of calculating the evaluation function:
+\begin{enumerate}
+    \item Greedy best-first search.
+    \item A* search.
+\end{enumerate}
+
+Conventionally, the most promising nodes have a small value of the evaluation function $f(n)$, so the frontier is implemented as a priority queue ordered in increasing order of $f(n)$. Thus, nodes with the minimum $f(n)$ are chosen first.
+
+\subsubsection{Greedy Best-First Search}
+Greedy best-first search algorithms use an evaluation function that is equal to the \textbf{heuristic function} $h(n)$, which gives the \textit{estimated} cost of the cheapest path from the state at node $n$ to a goal state. To apply the greedy best-first search, the function $h(n)$ must be known. Note that, the heuristic is an estimate, not an actual cost: if we knew the actual cost of the path, the problem would have already been solved.
+
+There are many heuristic functions we can choose for every given problem, but there are some more accurate than others. In fact, given two heuristic functions $h_1(n)$ and $h_2(n)$, such that $h_1(n)\le h_2(n)$ for any node $n$, $h_2$ is said to dominate $h_1$ since each node expanded using $h_2$ is also expanded using $h_1$. In this case we say that the function $h_2$ is more accurate, or more informed, than the function $h_1$.
+
+Greedy best-first search is neither complete nor optimal, as it can get stuck in local optimal solutions, without the possibility of backtracking, or in infinite loops. The time and space complexity of this algorithm in the worst-case scenario are both $O(b^m)$, where $m$ is the maximum depth of the search tree (which could be infinite).
+
+\subsubsection{A* Search}
+The most used informed search algorithm is \textbf{A* search}, a best-first search that uses the evaluation function $f(n) = g(n) + h(n)$, where:
+\begin{itemize}
+    \item $g(n)$ is the path cost from the initial state to node $n$. This function is known.
+    \item $h(n)$ is the estimate cost of the shortest path from $n$ to a goal state. This function is estimated.
+\end{itemize}
+
+\noindent
+In other words, $f(n)$ is the estimated cost of the best path that continues from the state $n$ to a goal state. By using both the cost so far and the estimated cost of reaching the goal, A* can lead the agent away from suboptimal paths.
+
+A* search is complete and optimal for tree-search when the function $h(n)$ is \textbf{admissible}. A heuristic function is admissible when, for each node $n$, it is true that 
+    $$0 \le h(n) \le h^*(n)$$
+where $h^*(n)$ represents the actual cost from the given node to a solution node. When $n$ is a goal state, $h(n)$ should be zero. An admissible heuristic is \textit{"optimistic"} since it always underestimates the true cost to reach the goal. In fact it can be seen as the cost of an optimal solution to a relaxed problem, obtained by removing the constraints.
+
+A* search is also complete and optimal for graph-search when the function $h(n)$ is \textbf{consistent}. An heuristic function is consistent when, for every node $n$ and every successor $n'$ generated from $n$ by action $a$, it is true that 
+$$h(n)\le c(n,a,n') + h(n') \;\; \textnormal{(triangular inequality)}$$
+When $n$ is a goal state, $h(n)$ should be zero. Every consistent heuristic function is also an admissible one, but not vice versa. Consistency is a stronger property than admissibility, because graph-search is more constrained since it does not consider nodes corresponding to the same state, thus it requires a stronger property to guarantee completeness and optimality. In addition, with a consistent heuristic, the first time we reach a state it will be on an optimal path, so we never have to re-add a state to the frontier and never have to change an entry in the \textit{reached} set.
+
+There are many types of consistent heuristic functions, but some of them are uninteresting: for example, the heuristic function $h_0(n) = 0 \;\; \forall n$ is consistent and admissible, but it implements a uniform-cost search (uninformed search algorithm), so it is not really that interesting.
+
+A special variation of the A* search is the \textbf{weighted A* algorithm}. It introduces a weight factor $w$, which is $1 \le w < \infty$, over the heuristic functions so that $f(n) = g(n) + w \cdot h(n)$. The theoretical properties of the simple A* search do not apply anymore, but this extension of the algorithm can be more efficient and solve search problems quicker.
+
+The last, and most successful, variation of A* search is the \textbf{iterative-deepening A* search} (IDA* search), which reduces memory requirements by applying a limit to the values of the evaluation function $f(n)$. It is to A* what iterative-deepening was to depth-first search: IDA* gives all the benefits of A* without the requirement to keep the reached states in memory, at the cost of visiting some states multiple times. In IDA* the cutoff value is the $f-cost (g+h)$; at each iteration, the cutoff value is the smallest $f-cost$ of any node that exceeded the cutoff on the previous iteration. IDA* search is complete and optimal when the heuristic function $h(n)$ is admissible.

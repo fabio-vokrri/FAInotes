@@ -1,0 +1,225 @@
+\section{Uncertainty}
+In the real world, agents must handle \textbf{uncertainty}, whether due to partial observability, nondeterminism or adversaries. An agent may never know for sure what state is in now or whether it will end up after a sequence of actions. Logical agents handle uncertainty by keeping track of a \textbf{belief state}, which is a representation of the set of all possible world states that it might be in, and generating a contingency plan that handles every possible eventuality that its sensors may report during execution. This approach works for simple problems, but has some major drawbacks:
+\begin{itemize}
+    \item The agent must consider evert possible explanation for its sensor observations, leading to a large belief state full of unlikely possibilities.
+    \item A correct contingent plan that handles every eventuality can grow arbitrarily large and must consider arbitrarily unlikely contingencies.
+    \item Sometimes there is no plan that is guaranteed to achieve the goal, yet the agent must act, so it must have some way to compare the merits of plans that are not guaranteed.
+\end{itemize}
+
+\noindent \textit{The right thing to do, the most rational decision, depends on both the relative importance of various goals and the likelihood that, and degree to which, they will be achieved.}
+
+In some real-world domains, trying to use logic fails for three main reasons:
+\begin{enumerate}
+    \item \textbf{Laziness}: it is too much work to list the complete set of antecedents od consequents needed to ensure an exception-less rule and too hard to use such rules. 
+    \item \textbf{Theoretical ignorance}: sometimes there is no complete theory for the domain.
+    \item \textbf{Practical ignorance}: even if we know all the rules, we might be uncertain about a particular case because not all the necessary test have been or can be run. 
+\end{enumerate}
+
+The agent's knowledge can at best provide only a \textbf{degree of belief} in the relevant sentences. The main tool for dealing with degrees of belief is \textbf{probability theory}, which provides a way of summarizing the uncertainty that comes from our laziness and ignorance.
+
+In order to make choices, an agent must have some \textbf{preferences} among the different possible outcomes \footnote{
+\textbf{Outcomes} are completely specified states.} of the various plans. We use \textbf{utility theory} to represent those preferences and reason with them. Utility theory says that every state has a degree of usefulness, also called utility, to an agent and that the agent will prefer states with the higher utility. The utility of a state is not absolute, but it is relative to the agent. 
+
+Probability theory and utility theory are combined in the general theory of rational decisions, called \textbf{decision theory}:
+$$Decision\;\; theory \; = \; Probability \;\; theory \; +\; Utility \;\; theory $$
+The fundamental idea of decision theory is that an agent is rational if and only if it chooses the action that yield the highest expected utility, averaged over all the possible outcomes of the action. This idea is also called the principle of \textbf{maximum expected utility} (or \textbf{MEU} for short). In this context, "expected" means the "average" or "statistical mean" of the outcome utilities, weighted by the probability of the outcome. 
+
+The decision-theoretic agent's belief state represents not just the possibilities for world states, but also their probabilities. Given the belief state and some knowledge of the effects of actions, the agent can make probabilistic predictions of action outcomes and hence select the action with the highest expected utility.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=1\linewidth]{algorithms/DT Agent.png}
+    \label{fig:DT_agent_algorithm}
+\end{figure}
+
+\subsection{Probability Theory}
+For the agent to represent and use probabilistic information, we need a formal language called \textbf{probability theory}.
+
+In probability theory, the set of all possible worlds is called the \textbf{sample space}. The possible worlds are \underline{mutually exclusive} and \underline{exhaustive}. The sample space is represented by the Greek letter $\Omega$ and the elements of the space are referred with the letter $\omega$. A fully specified probability model associates a numerical probability $P(\omega)$ with each possible world. The basic axioms of probability theory says that every possible world has a probability between 0 and 1 and the total probability of the set of possible worlds is 1:
+$$\forall\omega \;\; 0\le P(\omega) \le 1 \;\; and \;\; \sum_{\omega\in\Omega}P(\omega) = 1$$
+
+Probabilistic assertions and queries are not usually about particular possible worlds, but about some sets of them: in particular, these sets are called \textbf{events}. A set of worlds corresponds to a proposition in a formal language. The probability associated with a proposition is defined to be the sum of all the probabilities of the worlds in which it holds
+$$\forall \; proposition \; \phi, \;\; P(\phi)=\sum_{\omega\in\phi}P(\omega)$$
+
+We define \textbf{unconditional probability} as the degree of belief in a proposition in the absence of any other evidence. On the other hand, we define \textbf{conditional probability} as the degree of belief in a proposition given some evidence that has already been revealed. We write $P(a|b)$, pronounced "the probability of $a$ given $b$", and it is mathematically defined in terms of unconditional probabilities as follows:
+$$P(a|b) = \frac{P(a\land b)}{P(b)}$$
+which holds whenever $P(b)>0$. This equation can be rearranged in a different form, called the \textbf{product rule}:
+\begin{align*}
+    P(a\land b) &= P(a|b)P(b)\\
+    P(a\land b) &= P(b|a)P(a)
+\end{align*}
+
+\subsubsection{Variables and Probability Distributions}
+Variables in probability theory are called \textbf{random variables} and their names begin with an uppercase letter. Every random variable is a function that maps from the domain of possible worlds $\Omega$ to the set of values it can take on. Name for values are always lowercase, so we can write $\sum_xP(X=x)$ to sum over the values of $X$. By convention, propositions of the form $A=true$ are abbreviated with $a$, while $A=false$ is abbreviated with $\neg a$. Variables can have infinite ranges, either discrete or continuous. We can also combine elementary propositions using the connectives of propositional logic, keeping in mind that it is common to use commas for conjunction.
+
+Sometimes it is necessary to talk about the probabilities of all the possible values of a random variable. We can write
+\begin{align*}
+    P(X=x_1) &= y_1 \\
+    P(X=x_2) &= y_2 \\
+    &\;\;\vdots     \\
+    P(X=x_n) &= y_n 
+\end{align*}
+abbreviated with the following notation
+$$\textbf{P}(x) = \langle y_1, y_2, ..., y_n\rangle$$
+where the bold $\textbf{P}$ indicates that the result is a vector of numbers, assuming a predefined ordering. The $\textbf{P}(X)$ statement defines a \textbf{probability distribution} for the random variable $X$, that is an assignment of a probability for each possible value for $X$. The $\textbf{P}$ notation can also be used for conditional distributions: $\textbf{P}(X|Y)$ gives the values of $P(X=x_i|Y=y_j)$ for each possible $i, j$ pair.
+
+For continuous variables, it is not possible to write out the entire distribution as a vector,because there are infinitely many values. Instead we can define a so called \textbf{probability density function} (\textbf{pdfs} for short), which defines the probability that a random variable $X$ takes on some value $x$. We write the probability density fora continuous random variable $X$ at value $x$ as $P(X=x)$, or $P(x)$ for short. The intuitive definition of $P(x)$ is the following:
+$$P(x) = \lim_{dx\to0}P(x\le X\le x+dx)/dx$$
+
+In addition to distributions on single variables, we can use commas to denote the distribution on multiple variables. The resulting tables of probabilities are called \textbf{joint probability distribution}. A probability model is completely determined by the joint distribution for all of the random variables, which gives us the \textbf{full joint probability distribution}, which in principle is sufficient for calculating the probabilities of any proposition.
+
+\subsubsection{Probability Axioms}
+The basic axioms of probability imply certain relationships among the degrees of belief that can be accorded to logically related propositions. One important example is the relationship between the probability of a proposition and the probability of its negation
+\begin{align*}
+    P(\neg a) &= \sum_{\omega\in \neg a}P(\omega)\\
+    &= \sum_{\omega\in \neg a}P(\omega) + \sum_{\omega\in a}P(\omega) - \sum_{\omega\in a}P(\omega)\\
+    &= \sum_{\omega\in\Omega}P(\omega) - \sum_{\omega\in a}P(\omega) \\
+    &= 1 - P(a)
+\end{align*}
+We can also derive the well-known formula for the probability of a disjunction, also called the \textbf{inclusion-exclusion principle}:
+$$P(a \lor b) = P(a)+P(b)-P(a\land b)$$
+
+\subsubsection{Probabilistic Inference}
+Probabilistic inference is the computation of posterior probabilities for query propositions given some observed evidence. We can use the full joint distribution table as the "knowledge base" from which we can derive the answers to all questions.
+
+One particular common task is to extract the distribution over some subset of variables or a single variable. We can obtains such value by summing up the probabilities for each possible value of the other variable (adding together rows or columns), obtaining the so called \textbf{marginal probability}.The process of extracting the marginal probability from the table is called \textbf{marginalization}. The general marginalization rule for any set of variables $\textbf{Y}$ and $\textbf{Z}$ is 
+$$\textbf{P}(\textbf{Y})=\sum_\textbf{z}\textbf{P}(\textbf{Y},\textbf{Z}=\textbf{z})$$
+where $\sum_\textbf{z}$ sums over all the possible combinations of values of the set of variables $\textbf{Z}$. In other words
+$$P(a) = P(a\land b) + P(a\land \neg b)$$
+
+Using the product rule, we can replace $\textbf{P}(\textbf{Y}, \textbf{z})$ with $\textbf{P}(\textbf{Y}|\textbf{z})P(\textbf{z})$, obtaining the \textbf{conditioning rule}
+$$\textbf{P}(\textbf{Y}) = \sum_\textbf{z}\textbf{P}(\textbf{Y}|\textbf{z})P(\textbf{z})$$
+or, in other words
+$$P(a) = P(a|b)P(b)+P(a|\neg b)P(\neg b)$$
+
+In most cases, we are interested in computing conditional probabilities od some variables, given evidence about some others. Conditional probabilities can be  first calculated with the equation $P(a|b) = P(a\land b) / P(b)$
+to obtain an expression in terms of unconditional probabilities and then evaluating the expression from the full joint distribution. The term $P(b)$ in the expression for conditional probabilities can be seen as a normalization constant for the distribution $\textbf{P}(A|b)$, ensuring that it adds up to 1. We denote such constant with $\alpha$, so the expression can be written as
+$$\textbf{P}(A|b)=\alpha \textbf{P}(A\land b)$$
+This notation is quite useful in practice because we often don't know the value of \textbf{P(b)}, but we can temporarily ignore it and later infer it by knowing that probabilities must add up to 1.
+
+We can generalize the inference procedure. Let $\textbf{E}$ be the list of evidence variables and $\textbf{e}$ the list of observed values for them, and let $\textbf{Y}$ be the remaining unobserved variables (those that are not necessary to calculate the required probability). The query is $\textbf{P}(X|\textbf{e})$ and can be evaluated as follows
+$$\textbf{P}(X|\textbf{e})=\alpha\textbf{P}(X,\textbf{e})=\alpha\sum_\textbf{y}\textbf{P}(X,\textbf{e},\textbf{y})$$
+where the summation is over all possible combinations of values of the unobserved variables $\textbf{Y}$. Notice that together the variables $X$, $\textbf{E}$ and $\textbf{Y}$ constitute the complete set of variables for the domain, so $\textbf{P}(X,\textbf{e},\textbf{y})$ represents a subset of probabilities from the full joint distribution.
+
+Given the full joint distribution, the previous equation can answer any probabilistic query for discrete variables in that domain. However, this strategy does not scale up very well: in a discrete domain, given $n$ boolean variables, it requires an input table of size $O(2^n)$ and takes $O(2^n)$ time to process the table.
+
+\subsubsection{Independence}
+Independence is the knowledge that the occurrence of one event does not affect the probability of one other event. Mathematically, can be written as
+\begin{align*}
+    \begin{array}{ccccc}
+        \textbf{P}(X|Y) = \textbf{P}(X) & & \textbf{P}(Y|X) = \textbf{P}(Y) & &\textbf{P}(X, Y) = \textbf{P}(X)\textbf{P}(Y)
+    \end{array}
+\end{align*}
+or, in other words
+\begin{align*}
+    \begin{array}{ccccc}
+        P(a|b) = P(a) & & P(b|a) = P(b) & & P(a \land b) = P(a)P(b)
+    \end{array}
+\end{align*}
+
+Independence assertions are usually based on the knowledge of the domain. If the complete set of variables can be divided into independent subsets, then the full joint distribution can be factored into separate joint distributions on those subsets. When they are available, independence assertions can help in reducing the size of the domain representation and the complexity of the inference problem.
+
+\subsubsection{Bayes' Rule}
+We have previously defined the \textbf{product rule}, mathematically written as
+\begin{align*}
+    \begin{array}{ccc}
+        P(a\land b) = P(a|b)P(b) & or & P(a\land b) = P(b|a)P(a)
+    \end{array}
+\end{align*}
+By equating the two right-handed sides of the equations, we obtain that
+$$P(b|a) = \frac{P(a|b)P(b)}{P(a)}$$
+also known as the \textbf{Bayes' theorem}, which underlies most of modern AI systems for probabilistic inference. More generally we can write the Bayes' rule as follows
+$$\textbf{P}(Y|X) = \frac{\textbf{P}(X|Y)\textbf{P}(Y)}{\textbf{P}(X)}$$
+
+\subsection{Bayesian Networks}
+As already said, full joint probability distribution can answer any question about a domain, but can become too large as the number of variables grows. Independence and conditional independence can drastically reduce the number of probabilities required to define the full joint distribution. A \textbf{Bayesian network} is a data structure used to represent the dependencies among variables and can represent any full joint probability distribution in a concise manner. 
+
+A Bayesian network is a \textbf{directed acyclic graph} in which each node is annotated with quantitative probability information, as follows:
+\begin{enumerate}
+    \item Each node correspond to a random variable, which may be discrete or continuous.
+    \item Directed arrows connect pairs of nodes. If there is an arrow from node $X$ to node $Y$, $X$ is said to be the parent of $Y$. The graph has no directed cycles and hence is a directed acyclic graph (DAG for short).
+    \item Each node $X_i$ has associated probability information $\theta(X_i|Parents(X_i))$ that quantifies the effect of the parents on the node using a finite number of parameters. 
+\end{enumerate}
+
+The topology of the network specifies the conditional independence relationships that hold in the domain: the intuitive meaning of an arrow is that $X$ has a direct influence on $Y$, which suggests that causes should be parents of effects. Once the topology is laid out, we need only to specify the local probability information for each variable in the form of a conditional distribution given its parents. The full joint distribution for all the variables is defined by the topology and the local probability information, which is represented by a \textbf{conditional probability table} (CPT for short). Each row of the CPT contains the conditional probability of each node value for a \textbf{conditioning case}, which is a possible combination of values for the parent nodes. Each row \underline{must} sum to 1. A node with no parents has only one row, representing the prior probabilities of each possible value of the variable.
+
+Assuming that the Bayesian network contains $n$ variables $X_1, ..., X_n$, a generic entry in the joint distribution is denoted with $P(X_1=x_1\land...\land X_n=x_n)$, or $P(x_1,...,x_n)$ for short. Bayesian nets defines each entry in the joint distribution as follows:
+$$P(x_1,...,x_n) = \prod_{i=1}^{n}\theta(x_1\;|\;parents(X_i))$$
+where $parents(X_i)$ denotes the values of $Parents(X_i)$ that appear in $x_1, ..., x_n$. Thus, each entry in the joint distribution is represented by the product of the appropriate elements of the local conditional distribution in the Bayesian net. The Bayesian network is a representation of the joint probability distribution, so it can be used to answer any query by summing up all the relevant joint probability values, each calculated by multiplying probabilities from the local conditional distributions. 
+
+Now, the $\theta(x_i|parents(X_i))$ parameters in the previous equation can be proved to be exactly the conditional probabilities $P(x_i|parents(X_i))$ implied by the jointed distribution. The conditional probabilities can be computed as follows:
+\begin{align*}
+    P(x_i|parents(X_i)) &= \frac{P(x_i, parents(X_i))}{P(parents(X_i))}\\
+                        &= \frac{\sum_\textbf{y}P(x_i, parents(X_i),\textbf{y})}{\sum x_i',\textbf{y} P(x_i', parents(x_i), \textbf{y}}
+\end{align*}
+\clearpage
+Where $\textbf{y}$ represents the values of all variables other than $X_i$ and its parents. So, from the last line of the equation we can prove that $P(x_i|parents(X_i)) = \theta(x_i|parents(X_i))$, hence we can write that
+$$P(x_1,...,x_n) = \prod_{i=1}^nP(x_i|parents(X_i))$$
+
+This means that when we estimate the values for the local conditional distribution, they must be the actual conditional probabilities for the variable given its parents. 
+
+In order to construct a Bayesian network, we first need to rewrite the entries in the joint distribution in terms of conditional probabilities, using the \textbf{chain rule}:
+\begin{align*}
+P(x_1,...,x_n) &= P(x_n|x_{n-1},...,x_1)P(x_{n-1}|x_{n-2},...,x_1)\cdots P(x_2|x_1)P(x_1) \\
+               &= \prod_{i=1}^nP(x_i|x_{i-1},...,x_1)
+\end{align*}
+We can see that the specification of the joint distribution is equivalent to the general assertion that, for every variable in the network,
+$$\textbf{P}(X_i|X_{i-1},...,X_1)= \textbf{P}(X_i|Parents(X_i))$$
+provided that $Parents(X_i) \subseteq \{X_{i-1},...,X_1\}$. This condition is satisfied by numbering the node in \textbf{topological order}.
+
+\subsubsection{Exact Inference}
+The basic task for any probabilistic inference system is to compute the posterior probability distribution for a set of query variables, given some observed \textbf{event}. As seen before, we use the following notation:
+\begin{itemize}
+    \item $X$ denotes the query variable.
+    \item $\textbf{E}$ denotes the set of evidence variables $E_1, ..., E_n$.
+    \item $\textbf{e}$ denotes a particular observed event.
+    \item $\textbf{Y}$ denotes the hidden variables\footnote{\textbf{Hidden variables} are the nodes in the Bayesian networks which are neither input nor output, but are essential to structure the network. These nodes are non-evidence and non-query variables.}.
+    \item $\alpha$ denotes the normalization factor. 
+\end{itemize}
+So the complete set of variables is $\{X\}\cup\textbf{E}\cup\textbf{Y}$, and a typical query asks the posterior probability distribution $\textbf{P}(X|\textbf{e})$.
+
+As already said, any conditional probability can be computed by summing terms from the full joint distribution: specifically, a query $\textbf{P}(X|\textbf{e})$ can be answered using the equation 
+$$\textbf{P}(X|\textbf{e})=\alpha\textbf{P}(X,\textbf{e})=\alpha\sum_\textbf{y}\textbf{P}(X,\textbf{e},\textbf{y})$$
+
+Therefore, a query can be answered using a Bayesian network by computing sums of products of conditional probabilities from the network.
+
+There are several structures that can arise in Bayesian networks, which determine the influences some variables can have on others:
+\begin{itemize}
+    \item $X \rightarrow Y$: $X$ influences $Y$ (causal).
+    \item $X \leftarrow Y$: $X$ influences $Y$ (evidential).
+    \item $X \rightarrow W \rightarrow Y$: $X$ influences $Y$ (causal chain).
+    \item $X \leftarrow W \leftarrow Y$: $X$ influences $Y$ (evidential).
+    \item $X \leftarrow W \rightarrow Y$: $X$ influences $Y$.
+    \item $X \rightarrow W \leftarrow Y$ (V-structure): $X$ does \underline{not} influence $Y$.
+\end{itemize}
+
+\noindent
+In Bayesian networks, active trails describe a path along which information or dependencies can flow between nodes in the network. This concept is crucial for understanding the conditional independence relationships in the network. It can be demonstrated that a trail $X_1-...-X_n$ is active if it has no V-structures. Active trails can help in efficient inference by identifying which variables influence others directly or indirectly in the presence of observed evidence.
+
+The situation becomes more complex when evidence is added to the equation. For the cases in which the trail is in the form of $X \rightarrow Y$ and $X \leftarrow Y$, there are differences, since the evidence about some variable $Z$ plays no role in how $X$ and $Y$ effect each other. For the other cases:
+\begin{itemize}
+    \item $X \rightarrow W \rightarrow Y$: $X$ influences $Y$ only if $W\notin Z$; in other cases $X$ does not influence $Y$.
+    \item $X \leftarrow W \leftarrow Y$: $X$ influences $Y$ only if $W\notin Z$; in other cases $X$ does not influence $Y$.
+    \item $X \leftarrow W \rightarrow Y$: $X$ influences $Y$ only if $W\notin Z$; in other cases $X$ does not influence $Y$.
+    \item $X \rightarrow W \leftarrow Y$ (V-structure): $X$ cannot influence $Y$ if $W$ and \textit{\underline{all} its descendant} are not in $Z$; in other cases, $X$ can influence $Y$ if $W$ or one of its descendant are in $Z$.
+\end{itemize}
+
+\noindent
+In general, a trail $X_1-...-X_n$ is active given evidence $Z$ if for any V-structure $X_{i-1}\rightarrow X_i \leftarrow X_{i+1}$, $X_i$ or one of its descendant is in $Z$. No other $X_i$ in V-structures is in $Z$.
+
+\subsubsection{Approximate Inference}
+Approximate inference in Bayesian networks refers to methods used to estimate posterior probabilities when exact inference is computationally infeasible. This is common in large networks with many variables, where exact methods (like variable elimination or junction trees) become intractable due to exponential growth in computational complexity.
+
+The most used strategy in approximate inference is \textbf{sampling}, which relies on iteratively generating samples from the distribution to estimate posterior probabilities. This allows to do inference without enumerating all the possible configurations, as done in exact inference.
+
+A general method is \textbf{rejection sampling}, which first generates samples from the prior distribution specified by the network, then it rejects all those that do not match the evidence and finally, the estimate $\hat{P}(X=x|\textbf{e})$ is obtained by counting all occurrences of $X=x$ in the remaining samples. 
+
+More formally, let $\hat{\textbf{P}}(X|\textbf{e})$ be the estimated distribution that the algorithm returns. This distribution is computed by normalizing $\textbf{N}_{PS}(X,\textbf{e})$, which is the vector of sample counts for each value of $X$ where the sample agrees with the evidence $\textbf{e}$:
+
+$$\hat{\textbf{P}}(X|\textbf{e})=\alpha\textbf{N}_{PS}(X,\textbf{e})=\frac{\textbf{N}_{PS}(X|\textbf{e})}{N_{PS}(\textbf{e})}$$
+
+which gives
+
+$$\hat{\textbf{P}}(X|\textbf{e})\approx\frac{\textbf{P}(X, \textbf{e})}{P(\textbf{e})}=\textbf{P}(X|\textbf{e})$$
+
+That is, rejection sampling produces a consistent estimate of the true probability. rejection sampling can be quite inefficient since it might need to generate a huge number of samples, in order to do inference from the model.
